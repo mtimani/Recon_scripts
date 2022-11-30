@@ -23,11 +23,11 @@ sudo apt-get update && sudo apt-get install jq nuclei -y
 pip2 install hsecscan 
 sudo mv recon.py /usr/bin/
 sudo chmod +x /usr/bin/recon.py
-sudo chown username:username /usr/bin/recon.py
+sudo chown poolaudit:poolaudit /usr/bin/recon.py
 wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitness-2.4.2-linux-amd64" && mv gowitness* gowitness && chmod +x gowitness && sudo mv gowitness /usr/bin
 cd /opt
 sudo git clone "https://github.com/jtesta/ssh-audit.git"
-sudo chown -R username:username /opt/ssh-audit
+sudo chown -R poolaudit:poolaudit /opt/ssh-audit
 wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
 tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
 ./webanalyze -update
@@ -35,7 +35,7 @@ rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
 sudo mv webanalyze /usr/bin
 cd /opt
 sudo git clone https://github.com/ShutdownRepo/httpmethods
-sudo chown -R username:username /opt/httpmethods
+sudo chown -R poolaudit:poolaudit /opt/httpmethods
 cd /opt/httpmethods
 sudo python3 setup.py install
 ```
@@ -79,14 +79,14 @@ pip3 install aiodnsbrute
 pip3 install cidrize
 sudo mv asset_discovery.py /usr/bin/
 sudo chmod +x /usr/bin/asset_discovery.py
-sudo chown username:username /usr/bin/asset_discovery.py
+sudo chown poolaudit:poolaudit /usr/bin/asset_discovery.py
 sudo su
 go env -w GO111MODULE=off
 cd /opt/
 git clone https://github.com/hvs-consulting/SANextract
 cd SANextract
 go build
-chown -R username:username /opt/SANextract
+chown -R poolaudit:poolaudit /opt/SANextract
 wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitness-2.4.2-linux-amd64" && mv gowitness* gowitness && chmod +x gowitness && sudo mv gowitness /usr/bin
 wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
 tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
