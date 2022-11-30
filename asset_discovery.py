@@ -23,6 +23,7 @@ from termcolor import colored, cprint
 #---------------Constants---------------#
 dns_bruteforce_wordlist_path    = "/opt/SecLists/Discovery/DNS/subdomains-top1million-110000.txt"
 SANextract_path                 = "/opt/SANextract/SANextract"
+webanalyze_path                 = "/usr/bin/webanalyze"
 
 
 
@@ -30,12 +31,13 @@ SANextract_path                 = "/opt/SANextract/SANextract"
 def usage():
     print(
 '''
-usage: asset_discovery.py [-h] [-n] [-s] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
 
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
   -s, --screenshot      Use Gowitness to take screenshots of found web assets
+  -w, --webanalyzer      Use Webanalyzer to list used web technologies
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
@@ -58,7 +60,7 @@ def exit_abnormal():
 #---------Multithreading Function---------#
 def worker_f(directory, root_domain, found_domains):
     ## Print to console
-    cprint("Finding subdomains for: " + root_domain + "\n\n",'blue')
+    cprint("Finding subdomains for: " + root_domain,'blue')
     
     ## Subfinder
     bashCommand = "subfinder -silent -d " + root_domain
@@ -86,12 +88,15 @@ def first_domain_scan(directory, hosts):
     root_domains  = hosts.copy()
     found_domains = hosts.copy()
 
+    ## Print to console
+    cprint("Finding subdomains for specified root domains:\n", 'red')
+
     ## Loop over root domains
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_f = {executor.submit(worker_f, directory, root_domain, found_domains): root_domain for root_domain in root_domains}
         
         for future in concurrent.futures.as_completed(future_f):
-            cprint("Thread completed", 'blue')
+            None
     
     ## Sort - Uniq Found domains list
     found_domains = sorted(set(found_domains))
@@ -130,7 +135,7 @@ def domains_discovery(directory, hosts):
 #---------IP Discovery Function---------#
 def IP_discovery(directory, found_domains):
     ## Print to console
-    cprint("\n\nFinding IPs for found subdomains\n\n",'blue')
+    cprint("\n\nFinding IPs for found subdomains\n\n",'red')
 
     ## Variables initialization
     ip_dict = {}
@@ -165,7 +170,7 @@ def IP_discovery(directory, found_domains):
 #-------------Whois Function------------#
 def whois(directory,ip_list,ip_dict):
     ## Print to console
-    cprint("Whois magic\n\n",'blue')
+    cprint("Whois magic\n",'red')
 
     ## Create Whois directory
     try:
@@ -249,15 +254,15 @@ def whois(directory,ip_list,ip_dict):
 #---------Nuclei Function Launch--------#
 def nuclei_f(directory):
     ## Print to console
-    cprint("Nuclei scan launched!\n",'blue')
+    cprint("\nNuclei scan launched!\n",'red')
 
     ## Create Nuclei output directory
     dir_path = directory + "/Nuclei"
     try:
         os.mkdir(dir_path)
-        cprint("Creation of " + dir_path + " directory\n", 'blue')
+        cprint("Creation of " + dir_path + " directory", 'blue')
     except FileExistsError:
-        cprint("Directory " + dir_path + " already exists\n", 'blue')
+        cprint("Directory " + dir_path + " already exists", 'blue')
     except:
         raise
     
@@ -279,20 +284,81 @@ def nuclei_f(directory):
 #---------Screenshot Function Launch--------#
 def screenshot_f(directory):
     ## Print to console
-    cprint("Screenshots of found web assets with Gowitness launched!\n",'blue')
+    cprint("\nScreenshots of found web assets with Gowitness launched!\n",'red')
     
     ## Gowitness tool launch
     try:
         os.mkdir(directory + "/Screenshots")
-        cprint("Creation of " + directory + "/Screenshots directory\n", 'blue')
+        cprint("Creation of " + directory + "/Screenshots directory", 'blue')
     except FileExistsError:
-        cprint("Directory " + directory + "/Screenshots already exists\n", 'blue')
+        cprint("Directory " + directory + "/Screenshots already exists", 'blue')
     except:
         raise
 
     bashCommand = "gowitness file --disable-db --disable-logging -P " + directory + "Screenshots/ -f " + directory + "domain_list.txt.tmp"
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
+
+
+
+#-------Webanalyzer Worker Launch-------#
+def webanalyzer_worker(directory, domain):
+    ### Check if ports are open
+    try:
+        web_port = True
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex((domain,80))
+        if result == 0:
+            web_port = True
+        result = sock.connect_ex((domain,443))
+        if result == 0:
+            web_port = True
+    except:
+        web_port = False
+
+    ### Analyze
+    try:
+        if web_port:
+            os.system(webanalyze_path + " -host " + domain + " -output json -silent -search false -redirect | jq > " + directory + "/Webanalyzer/" + domain + ".json 2>/dev/null")
+    except:
+        cprint("\tError running Webanalyzer for " + domain + "\n", 'red')
+
+
+
+#-------Webanalyzer Function Launch------#
+def webanalyzer_f(directory, found_domains):
+    ## Print to console
+    cprint("\nFinding used technologies by the found web assets with Webanalyzer!\n", 'red')
+
+    ## Create output directories
+    try:
+        os.mkdir(directory + "/Webanalyzer")
+        cprint("Creation of " + directory + "/Webanalyzer directory", 'blue')
+    except FileExistsError:
+        cprint("Directory " + directory + "/Webanalyzer already exists", 'blue')
+    except:
+        raise
+
+    ## Update Webanalyze
+    try:
+        os.system(webanalyze_path + " -update")
+    except:
+        raise
+
+    ## Loop through found domains & multithread
+    with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+        future_f = {executor.submit(webanalyzer_worker, directory, domain): domain for domain in found_domains}
+        
+        for future in concurrent.futures.as_completed(future_f):
+            None
+
+    ## Remove empty files
+    for (dirpath, folder_names, files) in os.walk(directory + "/Webanalyzer/"):
+        for filename in files:
+            file_location = dirpath + '/' + filename
+            if os.path.isfile(file_location):
+                if os.path.getsize(file_location) == 0:
+                    os.remove(file_location)
 
 
 
@@ -307,6 +373,7 @@ def parse_command_line():
     ## Arguments
     parser.add_argument("-n", "--nuclei", dest='n', action='store_true', help="Use Nuclei scanner to scan found assets")
     parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use Gowitness to take screenshots of found web assets")
+    parser.add_argument("-w", "--webanalyzer", dest='w', action='store_true', help="Use Webanalyzer to list used web technologies")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
     content.add_argument("-f", "--filename", dest="host_list_file", help="Filename containing root domains to scan")
     content.add_argument("-l", "--list", dest="host_list", nargs='+', help="List of root domains to scan")
@@ -322,6 +389,7 @@ def main(args):
     host_list_file  = args.host_list_file
     do_nuclei       = args.n
     do_screenshots  = args.s
+    do_webanalyzer   = args.w
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
@@ -353,6 +421,10 @@ def main(args):
 
     ## Whois function call
     whois(directory, ip_list, ip_dict)
+
+    ## Webanalyzer function call
+    if (do_webanalyzer):
+        webanalyzer_f(directory, found_domains)
 
     ## Take screenshots of found web assets if -s is specified
     if (do_screenshots):
