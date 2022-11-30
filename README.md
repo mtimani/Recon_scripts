@@ -19,7 +19,7 @@ NB.: If your testssl script is not located in `/opt/testssl.sh/testssl.sh`, modi
 ### Installation
 The following commands must be executed to use the recon.sh script:
 ```
-sudo apt-get update && sudo apt-get install nuclei -y
+sudo apt-get update && sudo apt-get install jq nuclei -y
 pip2 install hsecscan 
 sudo mv recon.py /usr/bin/
 sudo chmod +x /usr/bin/recon.py
@@ -28,10 +28,11 @@ wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitnes
 cd /opt
 sudo git clone "https://github.com/jtesta/ssh-audit.git"
 sudo chown -R username:username /opt/ssh-audit
-sudo git clone https://github.com/chorsley/python-Wappalyzer
-sudo chown -R username:username /opt/python-Wappalyzer
-cd /opt/python-Wappalyzer
-sudo python3 setup.py install
+wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
+tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
+./webanalyze -update
+rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
+sudo mv webanalyze /usr/bin
 cd /opt
 sudo git clone https://github.com/ShutdownRepo/httpmethods
 sudo chown -R username:username /opt/httpmethods
@@ -73,7 +74,7 @@ Ex: asset_discovery.py -d $(pwd) -l target.com -n -s
 ### Installation
 The following commands must be executed to use the asset_discovery.sh script:
 ```
-sudo apt-get update && sudo apt-get install subfinder nuclei gccgo-go -y
+sudo apt-get update && sudo apt-get install subfinder jq nuclei gccgo-go -y
 pip3 install aiodnsbrute
 pip3 install cidrize
 sudo mv asset_discovery.py /usr/bin/
@@ -87,17 +88,23 @@ cd SANextract
 go build
 chown -R username:username /opt/SANextract
 wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitness-2.4.2-linux-amd64" && mv gowitness* gowitness && chmod +x gowitness && sudo mv gowitness /usr/bin
+wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
+tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
+./webanalyze -update
+rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
+sudo mv webanalyze /usr/bin
 ```
 Please note that **Go** must be installed on your machine.
 
 ### Usage
 ```
-usage: asset_discovery.py [-h] [-n] [-s] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
 
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
   -s, --screenshot      Use Gowitness to take screenshots of found web assets
+  -w, --webanalyzer      Use Webanalyzer to list used web technologies
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
