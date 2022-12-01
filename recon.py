@@ -10,6 +10,7 @@ import subprocess
 import socket
 import concurrent.futures
 import ftplib
+import time
 import json
 
 
@@ -19,14 +20,11 @@ from termcolor import colored, cprint
 
 
 
-#---------------Wappalyzer--------------#
-from Wappalyzer import Wappalyzer, WebPage
-
-
-
 #---------------Constants---------------#
 testssl_location    = "/opt/testssl.sh/testssl.sh"
 ssh_audit_location  = "/opt/ssh-audit/ssh-audit.py"
+httpmethods         = "/opt/httpmethods/httpmethods.py"
+webanalyze_path     = "/usr/bin/webanalyze"
 dns_server          = "8.8.8.8"
 
 
@@ -116,7 +114,8 @@ def nmap_f(directory, domain):
     ## Nmap Command execution
     output_location = directory + "/01.Nmap/02.Nmap/" + domain + "/" + domain + " "
     if ping_failed:
-        bashCommand = "nmap -A -p- -Pn -oA " + output_location + domain
+        #bashCommand = "nmap -A -p- -Pn -oA " + output_location + domain
+        bashCommand = "nmap -A -p 22,80,443,445,1099,1433,3000,3306,3389,5000,5900,7001,7002,8000,8001,8008,8080,8083,8443,8834,8888,10000,28017,9000,623,8090,2301,45000,45001,623,873,1090,1098,1099,4444,11099,47001,47002,10999,6379,7000-7004,8002,8003,9001,9002,9003,9200,9503,7070,7071,1789,1889,11501,1500,5001,81,6338,7199,9010 -oA " + output_location + domain
     else:
         bashCommand = "nmap -A -p- -oA " + output_location + domain
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -372,20 +371,32 @@ def determine_technologies(directory, domain):
         for line in fp.read().splitlines():
             if "ssh " in line:
                 ssh_ports.append(line.split("/tcp")[0])
+            if line.endswith("ssh"):
+                ssh_ports.append(line.split("/tcp")[0])
             elif "ftp " in line:
+                ftp_ports.append(line.split("/tcp")[0])
+            elif line.endswith("ftp"):
                 ftp_ports.append(line.split("/tcp")[0])
             elif "http " in line:
                 http_ports.append(line.split("/tcp")[0])
+            elif line.endswith("http"):
+                http_ports.append(line.split("/tcp")[0])
             elif "https " in line:
+                https_ports.append(line.split("/tcp")[0])
+            elif "https?" in line:
+                https_ports.append(line.split("/tcp")[0])
+            elif line.endswith("https"):
                 https_ports.append(line.split("/tcp")[0])
             elif "telnet " in line:
                 telnet_ports.append(line.split("/tcp")[0])
+            elif line.endswith("telnet"):
+                telnet_ports.append(line.split("/tcp")[0])
 
-    technologies["ssh"]     = ssh_ports
-    technologies["ftp"]     = ftp_ports
-    technologies["http"]    = http_ports
-    technologies["https"]   = https_ports
-    technologies["telnet"]  = telnet_ports
+    technologies["ssh"]     = ssh_ports.copy()
+    technologies["ftp"]     = ftp_ports.copy()
+    technologies["http"]    = http_ports.copy()
+    technologies["https"]   = https_ports.copy()
+    technologies["telnet"]  = telnet_ports.copy()
 
     return technologies
 
@@ -562,15 +573,14 @@ def http_f(directory, domain, port):
 
     except:
         cprint("\tError running Google Dorks commands for " + domain + " port " + port, 'red')
-    
+
     ## HTTP Methods
     try:
         ### Create Google Dorks subdirectory
         dir_create_check(working_dir + "/HTTP_Methods", True)
         
         ### Analyze
-        ### Analyze
-        cprint("\n\nThe following are the authorized methods by the http://" + domain + " website\n", 'red')
+        cprint("\n\nThe following are the authorized methods by the https://" + domain + " website\n", 'red')
         os.system(httpmethods + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
 
     except:
@@ -593,24 +603,16 @@ def http_f(directory, domain, port):
     except:
         cprint("\tError running wafw00f for " + domain + " port " + port, 'red')
 
-    ## Wappalyzer
+    ## Webanalyzer
     try:
-        ### Create Wappalyzer subdirectory
-        dir_create_check(working_dir + "/Wappalyzer", True)
-
-        ### Update plugins
-        wappalyzer = Wappalyzer.latest()
+        ### Create Webanalyzer subdirectory
+        dir_create_check(working_dir + "/Webanalyzer", True)
 
         ### Analyze
-        webpage = WebPage.new_from_url('http://' + domain + ':' + port)
-        output = wappalyzer.analyze_with_versions_and_categories(webpage)
-
-        ### Write output to file
-        with open(working_dir + "/Wappalyzer/output.json", "w") as fp:
-            fp.write(json.dumps(output, sort_keys=True, indent=4))
+        os.system(webanalyze_path + " -host http://" + domain + ":" + port + "/ -output json -silent -search false -redirect | jq > " + working_dir + "/Webanalyzer/webanalyzer_out.json 2>/dev/null")
 
     except:
-        cprint("\tError running Wappalyzer for " + domain + " port " + port, 'red')
+        cprint("\tError running Webanalyzer for " + domain + " port " + port, 'red')
 
     ## HTTP Header analysis
     try:
@@ -702,7 +704,7 @@ def https_f(directory, domain, port):
 
     except:
         cprint("\tError running Google Dorks commands for " + domain + " port " + port, 'red')
-    
+
     ## HTTP Methods
     try:
         ### Create Google Dorks subdirectory
@@ -715,7 +717,7 @@ def https_f(directory, domain, port):
 
     except:
         cprint("\tError running Http Methods tool for " + domain + " port " + port, 'red')
-    
+
     ## Wafw00f
     try:
         ### Create WAF subdirectory
@@ -733,24 +735,16 @@ def https_f(directory, domain, port):
     except:
         cprint("\tError running wafw00f for " + domain + " port " + port, 'red')
 
-    ## Wappalyzer
+    ## Webanalyzer
     try:
-        ### Create Wappalyzer subdirectory
-        dir_create_check(working_dir + "/Wappalyzer", True)
-
-        ### Update plugins
-        wappalyzer = Wappalyzer.latest()
+        ### Create Webanalyzer subdirectory
+        dir_create_check(working_dir + "/Webanalyzer", True)
 
         ### Analyze
-        webpage = WebPage.new_from_url('https://' + domain + ':' + port)
-        output = wappalyzer.analyze_with_versions_and_categories(webpage)
-
-        ### Write output to file
-        with open(working_dir + "/Wappalyzer/output.json", "w") as fp:
-            fp.write(json.dumps(output, sort_keys=True, indent=4))
+        os.system(webanalyze_path + " -host https://" + domain + ":" + port + "/ -output json -silent -search false -redirect | jq > " + working_dir + "/Webanalyzer/webanalyzer_out.json 2>/dev/null")
 
     except:
-        cprint("\tError running Wappalyzer for " + domain + " port " + port, 'red')
+        cprint("\tError running Webanalyzer for " + domain + " port " + port, 'red')
 
     ## HTTP Header analysis
     try:
@@ -855,6 +849,9 @@ def extended_tests(directory, domains, params):
     for domain in domains:
         technologies_per_domain[domain] = determine_technologies(directory, domain)
 
+    ## Update Webanalyzer
+    os.system(webanalyze_path + " -update")
+
     ## Setup Multithreading
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         for domain in domains:
@@ -916,11 +913,11 @@ def recon(directory, hosts, params):
         future_dns  = {executor.submit(dns_f, directory, domain): domain for domain in domains}
         future_ssl  = {executor.submit(ssl_f, directory, domain): domain for domain in domains}
 
-        for future in concurrent.futures.as_completed(future_nmap):
-            cprint("Thread completed", 'blue')
         for future in concurrent.futures.as_completed(future_dns):
             cprint("Thread completed", 'blue')
         for future in concurrent.futures.as_completed(future_ssl):
+            cprint("Thread completed", 'blue')
+        for future in concurrent.futures.as_completed(future_nmap):
             cprint("Thread completed", 'blue')
 
     ## Launch extended tests if -e is specified
