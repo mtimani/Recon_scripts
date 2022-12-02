@@ -25,6 +25,7 @@ dns_bruteforce_wordlist_path    = "/opt/SecLists/Discovery/DNS/subdomains-top1mi
 SANextract_path                 = "/opt/SANextract/SANextract"
 webanalyze_path                 = "/usr/bin/webanalyze"
 gau_path                        = "/usr/bin/gau"
+gowitness_path                  = "/usr/bin/gowitness"
 
 
 
@@ -297,7 +298,7 @@ def screenshot_f(directory):
     except:
         raise
 
-    os.system("gowitness file --disable-db --disable-logging -P " + directory + "Screenshots/ -f " + directory + "domain_list.txt.tmp")
+    os.system(gowitness_path + " file --disable-db --disable-logging -P " + directory + "/Screenshots/ -f " + directory + "/domain_list.txt")
 
 
 
