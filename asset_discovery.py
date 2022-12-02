@@ -297,9 +297,7 @@ def screenshot_f(directory):
     except:
         raise
 
-    bashCommand = "gowitness file --disable-db --disable-logging -P " + directory + "Screenshots/ -f " + directory + "domain_list.txt.tmp"
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    os.system("gowitness file --disable-db --disable-logging -P " + directory + "Screenshots/ -f " + directory + "domain_list.txt.tmp")
 
 
 
