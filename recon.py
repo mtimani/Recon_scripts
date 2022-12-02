@@ -25,6 +25,7 @@ testssl_location    = "/opt/testssl.sh/testssl.sh"
 ssh_audit_location  = "/opt/ssh-audit/ssh-audit.py"
 httpmethods         = "/opt/httpmethods/httpmethods.py"
 webanalyze_path     = "/usr/bin/webanalyze"
+gau_path            = "/usr/bin/gau"
 dns_server          = "8.8.8.8"
 
 
@@ -614,6 +615,17 @@ def http_f(directory, domain, port):
     except:
         cprint("\tError running Webanalyzer for " + domain + " port " + port, 'red')
 
+    ## Gau
+    try:
+        ### Create Gau subdirectory
+        dir_create_check(working_dir + "/Gau", True)
+
+        ### Analyze
+        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx,urlscan --threads 100")
+
+    except:
+        cprint("\tError running Gau for " + domain + " port " + port, 'red')
+
     ## HTTP Header analysis
     try:
         ### Create HTTP Headers subdirectory
@@ -745,6 +757,17 @@ def https_f(directory, domain, port):
 
     except:
         cprint("\tError running Webanalyzer for " + domain + " port " + port, 'red')
+
+    ## Gau
+    try:
+        ### Create Gau subdirectory
+        dir_create_check(working_dir + "/Gau", True)
+
+        ### Analyze
+        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx,urlscan --threads 100")
+
+    except:
+        cprint("\tError running Gau for " + domain + " port " + port, 'red')
 
     ## HTTP Header analysis
     try:
