@@ -38,6 +38,10 @@ sudo git clone https://github.com/ShutdownRepo/httpmethods
 sudo chown -R poolaudit:poolaudit /opt/httpmethods
 cd /opt/httpmethods
 sudo python3 setup.py install
+wget -c "https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz"
+tar -xzvf gau_2.1.2_linux_amd64.tar.gz
+sudo mv gau /usr/bin/
+rm -rf gau_2.1.2_linux_amd64.tar.gz LICENSE README.md
 ```
 
 ### Usage
@@ -93,18 +97,23 @@ tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
 ./webanalyze -update
 rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
 sudo mv webanalyze /usr/bin
+wget -c "https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz"
+tar -xzvf gau_2.1.2_linux_amd64.tar.gz
+sudo mv gau /usr/bin/
+rm -rf gau_2.1.2_linux_amd64.tar.gz LICENSE README.md
 ```
 Please note that **Go** must be installed on your machine.
 
 ### Usage
 ```
-usage: asset_discovery.py [-h] [-n] [-s] [-w] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
 
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
   -s, --screenshot      Use Gowitness to take screenshots of found web assets
-  -w, --webanalyzer      Use Webanalyzer to list used web technologies
+  -w, --webanalyzer     Use Webanalyzer to list used web technologies
+  -g, --gau             Use gau tool to find interresting URLs on found web assets
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
