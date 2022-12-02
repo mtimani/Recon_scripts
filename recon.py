@@ -308,9 +308,7 @@ def screenshot_f(directory, domains):
 
     ## Gowitness tool launch
     dir_create_check(filename_path + "Screenshots", True)
-    bashCommand = "gowitness file --disable-db --disable-logging -P " + filename_path + "Screenshots/ -f " + filename_path + "domain_list.txt.tmp"
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    os.system("gowitness file --disable-db -P " + filename_path + "Screenshots/ -f " + filename_path + "domain_list.txt.tmp")
 
     ## Remove temporary file
     bashCommand = "rm -rf " + filename_path + "domain_list.txt.tmp"
