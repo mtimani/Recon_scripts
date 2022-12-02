@@ -65,17 +65,19 @@ def dir_create_check(dir_path, tab):
     if not(tab):
         try:
             os.mkdir(dir_path)
-            cprint("Creation of " + dir_path + " directory\n", 'blue')
+            #cprint("Creation of " + dir_path + " directory\n", 'blue')
         except FileExistsError:
-            cprint("Directory " + dir_path + " already exists\n", 'blue')
+            #cprint("Directory " + dir_path + " already exists\n", 'blue')
+            None
         except:
             raise
     else:
         try:
             os.mkdir(dir_path)
-            cprint("\tCreation of " + dir_path + " directory\n", 'blue')
+            #cprint("\tCreation of " + dir_path + " directory\n", 'blue')
         except FileExistsError:
-            cprint("\tDirectory " + dir_path + " already exists\n", 'blue')
+            #cprint("\tDirectory " + dir_path + " already exists\n", 'blue')
+            None
         except:
             raise
 
@@ -91,7 +93,7 @@ def nmap_f(directory, domain):
 
     ## Ping scan
     ### Print to console
-    cprint("\tPing scan of " + domain + "\n",'blue')
+    cprint("Ping scan of " + domain + "\n",'red')
 
     ### Ping command execution
     bashCommand = "ping -c 1 " + domain
@@ -110,7 +112,7 @@ def nmap_f(directory, domain):
     
     ## Nmap scan
     ### Print to console
-    cprint("\tNmap scan of " + domain + "\n",'blue')
+    cprint("Nmap scan of " + domain + "\n",'red')
 
     ## Nmap Command execution
     output_location = directory + "/01.Nmap/02.Nmap/" + domain + "/" + domain + " "
@@ -130,7 +132,7 @@ def dns_f(directory, domain):
     dir_create_check(directory + "/02.DNS/" + domain, True)
 
     ## Print to console
-    cprint("\tDNS recon of " + domain + "\n",'blue')
+    cprint("DNS recon of " + domain + "\n",'red')
 
     ## DNS command execution
     ### Dig domain
@@ -219,7 +221,7 @@ def ssl_f(directory, domain):
     dir_create_check(directory + "/03.SSL/" + domain, True)
 
     ## Print to console
-    cprint("\tSSL recon of " + domain + "\n",'blue')
+    cprint("SSL recon of " + domain + "\n",'red')
 
     ## SSLScan
     bashCommand = "sslscan " + domain
@@ -287,7 +289,7 @@ def check_dir_index(directory, name):
 #---------Screenshot Function Launch--------#
 def screenshot_f(directory, domains):
     ## Print to console
-    cprint("Screenshots of found web assets with Gowitness launched!\n",'blue')
+    cprint("Screenshots of found web assets with Gowitness launched!\n",'red')
 
     ## Counter
     index = check_dir_index(directory, "HTTP")
@@ -320,7 +322,7 @@ def screenshot_f(directory, domains):
 #---------Nuclei Function Launch--------#
 def nuclei_f(directory, domains):
     ## Print to console
-    cprint("Nuclei scan launched!\n",'blue')
+    cprint("Nuclei scan launched!\n",'red')
 
     ## Counter
     index = check_dir_index(directory, "Nuclei")
@@ -372,15 +374,21 @@ def determine_technologies(directory, domain):
         for line in fp.read().splitlines():
             if "ssh " in line:
                 ssh_ports.append(line.split("/tcp")[0])
-            if line.endswith("ssh"):
+            elif line.endswith("ssh"):
+                ssh_ports.append(line.split("/tcp")[0])
+            elif "ssh?" in line:
                 ssh_ports.append(line.split("/tcp")[0])
             elif "ftp " in line:
+                ftp_ports.append(line.split("/tcp")[0])
+            elif "ftp?" in line:
                 ftp_ports.append(line.split("/tcp")[0])
             elif line.endswith("ftp"):
                 ftp_ports.append(line.split("/tcp")[0])
             elif "http " in line:
                 http_ports.append(line.split("/tcp")[0])
             elif line.endswith("http"):
+                http_ports.append(line.split("/tcp")[0])
+            elif "http?" in line:
                 http_ports.append(line.split("/tcp")[0])
             elif "https " in line:
                 https_ports.append(line.split("/tcp")[0])
@@ -391,6 +399,8 @@ def determine_technologies(directory, domain):
             elif "telnet " in line:
                 telnet_ports.append(line.split("/tcp")[0])
             elif line.endswith("telnet"):
+                telnet_ports.append(line.split("/tcp")[0])
+            elif "telnet?" in line:
                 telnet_ports.append(line.split("/tcp")[0])
 
     technologies["ssh"]     = ssh_ports.copy()
@@ -937,11 +947,14 @@ def recon(directory, hosts, params):
         future_ssl  = {executor.submit(ssl_f, directory, domain): domain for domain in domains}
 
         for future in concurrent.futures.as_completed(future_dns):
-            cprint("Thread completed", 'blue')
+            #cprint("Thread completed", 'blue')
+            None
         for future in concurrent.futures.as_completed(future_ssl):
-            cprint("Thread completed", 'blue')
+            #cprint("Thread completed", 'blue')
+            None
         for future in concurrent.futures.as_completed(future_nmap):
-            cprint("Thread completed", 'blue')
+            #cprint("Thread completed", 'blue')
+            None
 
     ## Launch extended tests if -e is specified
     if (params["do_extended"]):
