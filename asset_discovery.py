@@ -24,6 +24,7 @@ from termcolor import colored, cprint
 dns_bruteforce_wordlist_path    = "/opt/SecLists/Discovery/DNS/subdomains-top1million-110000.txt"
 SANextract_path                 = "/opt/SANextract/SANextract"
 webanalyze_path                 = "/usr/bin/webanalyze"
+gau_path                        = "/usr/bin/gau"
 
 
 
@@ -31,13 +32,14 @@ webanalyze_path                 = "/usr/bin/webanalyze"
 def usage():
     print(
 '''
-usage: asset_discovery.py [-h] [-n] [-s] [-w] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
 
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
   -s, --screenshot      Use Gowitness to take screenshots of found web assets
-  -w, --webanalyzer      Use Webanalyzer to list used web technologies
+  -w, --webanalyzer     Use Webanalyzer to list used web technologies
+  -g, --gau             Use gau tool to find interresting URLs on found web assets
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
@@ -362,6 +364,19 @@ def webanalyzer_f(directory, found_domains):
 
 
 
+#--------------Gau Function-------------#
+def gau_f(directory):
+    ## Print to console
+    cprint("\nFinding interresting URLs based on found web assets\n", 'red')
+
+    ## Launch Gau Tool
+    try:
+        os.system("cat " + directory + "/domain_list.txt | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx,urlscan --threads 100")
+    except:
+        cprint("\t Error running gau tool on found web assets\n", 'red')
+
+
+
 #--------Arguments Parse Function-------#
 def parse_command_line():
     ## Arguments groups
@@ -374,6 +389,7 @@ def parse_command_line():
     parser.add_argument("-n", "--nuclei", dest='n', action='store_true', help="Use Nuclei scanner to scan found assets")
     parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use Gowitness to take screenshots of found web assets")
     parser.add_argument("-w", "--webanalyzer", dest='w', action='store_true', help="Use Webanalyzer to list used web technologies")
+    parser.add_argument("-g", "--gau", dest='g', action='store_true', help="Use gau tool to find interresting URLs on found web assets")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
     content.add_argument("-f", "--filename", dest="host_list_file", help="Filename containing root domains to scan")
     content.add_argument("-l", "--list", dest="host_list", nargs='+', help="List of root domains to scan")
@@ -389,7 +405,8 @@ def main(args):
     host_list_file  = args.host_list_file
     do_nuclei       = args.n
     do_screenshots  = args.s
-    do_webanalyzer   = args.w
+    do_webanalyzer  = args.w
+    do_gau          = args.g
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
@@ -425,6 +442,10 @@ def main(args):
     ## Webanalyzer function call
     if (do_webanalyzer):
         webanalyzer_f(directory, found_domains)
+
+    ## Gau function call
+    if (do_gau):
+        gau_f(directory)
 
     ## Take screenshots of found web assets if -s is specified
     if (do_screenshots):
