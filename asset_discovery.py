@@ -371,14 +371,19 @@ def webanalyzer_f(directory, found_domains):
                     technologies_detailed_list = json.load(fp)['matches']
                     for element in technologies_detailed_list:
                         techs = element['app_name']
-                        if techs in technologies:
-                            technologies[techs] += 1
-                        else:
-                            technologies[techs] = 1
+                    if techs in technologies:
+                        technologies[techs]['number'] += 1
+                    else:
+                        technologies[techs] = {"number": 1, "versions": [], "hostname_versions": {}}
+                    if element['version'] != "":
+                        technologies[techs]['versions'].append(element['version'])
+                        technologies[techs]['hostname_versions'][filename] = element['version']
+                    else:
+                        technologies[techs]['hostname_versions'][filename] = ""
     
     ## Write technologies statistics to file
     with open(directory + "/technologies_statistics.json", "w") as fp:
-        fp.write(json.dumps(technologies, sort_keys=True, indent=4))
+        fp.write(json.dumps(technologies, sort_keys=False, indent=4))
 
 
 
