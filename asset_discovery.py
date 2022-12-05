@@ -361,6 +361,25 @@ def webanalyzer_f(directory, found_domains):
                 if os.path.getsize(file_location) == 0:
                     os.remove(file_location)
 
+    ## Statistics
+    technologies = {}
+    for (dirpath, folder_names, files) in os.walk(directory + "/Webanalyzer/"):
+        for filename in files:
+            file_location = dirpath + '/' + filename
+            if os.path.isfile(file_location):
+                with open(file_location, "r") as fp:
+                    technologies_detailed_list = json.load(fp)['matches']
+                    for element in technologies_detailed_list:
+                        techs = element['app_name']
+                        if techs in technologies:
+                            technologies[techs] += 1
+                        else:
+                            technologies[techs] = 1
+    
+    ## Write technologies statistics to file
+    with open(directory + "/technologies_statistics.json", "w") as fp:
+        fp.write(json.dumps(technologies, sort_keys=True, indent=4))
+
 
 
 #--------------Gau Function-------------#
