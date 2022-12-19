@@ -92,7 +92,7 @@ def worker_f(directory, loss, logging):
             results[coin] = output['Return [%]']
             ## Exceptional calculation
             if output['Return [%]'] > 100:
-                exceptional.append({"sl": sl_p, "tp": tp_p, "coin": coin,"average": average})
+                exceptional.append({"sl": sl_p, "tp": tp_p, "coin": coin, "average": output['Return [%]']})
         except BinanceAPIException as e:
             if logging:
                 cprint('Coin ' + coin + ' is not available', 'blue')
