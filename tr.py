@@ -28,13 +28,14 @@ client = Client()
 
 
 #----------------Cryptos----------------#
+coins = ["ETHUSDT"]
 coins = ["AAVEUSDT","ABBCUSDT","ADAUSDT","ALGOUSDT","AMPUSDT","ANKRUSDT","ANTUSDT","APEUSDT","APIUSDT","APTUSDT","ARUSDT","ASTRUSDT","ATOMUSDT","AUDIOUSDT","AVAXUSDT","AXSUSDT","BALUSDT","BATUSDT","BCHUSDT","BITUSDT","BNBUSDT","BNXUSDT","BONEUSDT","BORAUSDT","BSVUSDT","BTCUSDT","BTGUSDT","BTRSTUSDT","BTTUSDT","BUSDUSDT","CAKEUSDT","CELUSDT","CELOUSDT","CELRUSDT","CHRUSDT","CHSBUSDT","CHZUSDT","COMPUSDT","CROUSDT","CRVUSDT","CSPRUSDT","CVCUSDT","CVXUSDT","DAIUSDT","DAOUSDT","DASHUSDT","DCRUSDT","DGBUSDT","DOGEUSDT","DOTUSDT","DYDXUSDT","EGLDUSDT","ELONUSDT","ENJUSDT","ENSUSDT","EOSUSDT","ETCUSDT","ETHUSDT","ETHWUSDT","EWTUSDT","FEIUSDT","FILUSDT","FLOWUSDT","FLUXUSDT","FTMUSDT","FXSUSDT","GALAUSDT","GLMUSDT","GLMRUSDT","GMTUSDT","GMXUSDT","GNOUSDT","GRTUSDT","GTUSDT","GUSDUSDT","HBARUSDT","HIVEUSDT","HNTUSDT","HOTUSDT","HTUSDT","ICPUSDT","ICXUSDT","ILVUSDT","IMXUSDT","INJUSDT","IOSTUSDT","IOTXUSDT","JASMYUSDT","JSTUSDT","KAVAUSDT","KCSUSDT","KDAUSDT","KLAYUSDT","KNCUSDT","KSMUSDT","LDOUSDT","LEOUSDT","LINKUSDT","LPTUSDT","LRCUSDT","LSKUSDT","LTCUSDT","LUNAUSDT","LUNCUSDT","MAGICUSDT","MANAUSDT","MASKUSDT","MATICUSDT","MDXUSDT","MEDUSDT","METISUSDT","MINAUSDT","MIOTAUSDT","MKRUSDT","MXUSDT","MXCUSDT","NEARUSDT","NEOUSDT","NEXOUSDT","NFTUSDT","OCEANUSDT","OKBUSDT","OMGUSDT","ONEUSDT","ONGUSDT","ONTUSDT","OPUSDT","OSMOUSDT","PAXGUSDT","PEOPLEUSDT","PLAUSDT","POLYUSDT","PUNDIXUSDT","PYRUSDT","QNTUSDT","QTUMUSDT","RBNUSDT","REQUSDT","RLCUSDT","RNDRUSDT","ROSEUSDT","RSRUSDT","RUNEUSDT","RVNUSDT","SANDUSDT","SCUSDT","SCRTUSDT","SFPUSDT","SHIBUSDT","SKLUSDT","SLPUSDT","SNTUSDT","SNXUSDT","SOLUSDT","SSVUSDT","STORJUSDT","STXUSDT","SUSHIUSDT","SXPUSDT","SYSUSDT","TUSDT","TFUELUSDT","THETAUSDT","TONUSDT","TRIBEUSDT","TRXUSDT","TUSDUSDT","TWTUSDT","UMAUSDT","UNIUSDT","USDCUSDT","USDDUSDT","USDNUSDT","USDPUSDT","USDTUSDT","USTCUSDT","VETUSDT","VGXUSDT","WAVESUSDT","WAXPUSDT","WBTCUSDT","WINUSDT","WOOUSDT","XCHUSDT","XCNUSDT","XDCUSDT","XECUSDT","XEMUSDT","XLMUSDT","XMRUSDT","XNOUSDT","XRPUSDT","XTZUSDT","XYMUSDT","YFIUSDT","ZECUSDT","ZENUSDT","ZILUSDT","ZRXUSDT"]
-#coins = ["ETHUSDT"]
 
 
 #-----------Global variables------------#
 sl_p = 0
 tp_p = 0
+exceptional = []
 
 
 
@@ -89,6 +90,9 @@ def worker_f(directory, loss, logging):
             bt = Backtest(df, DataTrader, cash = 100000, commission = 0.0015)
             output = bt.run()
             results[coin] = output['Return [%]']
+            ## Exceptional calculation
+            if output['Return [%]'] > 100:
+                exceptional.append({"sl": sl_p, "tp": tp_p, "coin": coin,"average": average})
         except BinanceAPIException as e:
             if logging:
                 cprint('Coin ' + coin + ' is not available', 'blue')
@@ -98,38 +102,23 @@ def worker_f(directory, loss, logging):
                 cprint('An error occured for ' + coin, 'red')
             continue
 
-    #cprint("\n\nsl = " + str(sl_p), "red")
-    #cprint("tp = " + str(tp_p), "red")
-    #colorful = highlight(
-    #    formatted_json,
-    #    lexer=JsonLexer(),
-    #    formatter=Terminal256Formatter(),
-    #)    
-    #print(colorful)
-    #cprint('\nAverage value : ' + str(res),'red')
-
     ## Average calculation
     average = 0
-    for average in results.values():
+    for val in results.values():
         average += val
     average = average / len(results)
 
     ## Final json formatting
-    final = {"average": average, "sl": sl_p, "tp": tp_p, "results": results}
+    final = {"sl": sl_p, "tp": tp_p, "average": average, "results": results}
     formatted_final = json.dumps(final, indent=4)
-    print(formatted_final)
-
-    ## Create output directories
-    try:
-        os.mkdir(directory + "/Strategy_statistics")
-        cprint("Creation of " + directory + "/Strategy_statistics directory", 'blue')
-    except FileExistsError:
-        cprint("Directory " + directory + "/Strategy_statistics already exists", 'blue')
-    except:
-        raise
+    
+    if logging:
+        colorful = highlight(formatted_final, lexer=JsonLexer(), formatter=Terminal256Formatter())
+        print(colorful)
 
     ## Write into output directory
-    output_file = directory + "/Strategy_statistics/sl_" + sl_p + "_tp_" + tp_p + ".json"
+    output_dir = directory + "/Strategy_statistics/"
+    output_file = output_dir + "sl_" + str(sl_p) + "_tp_" + str(tp_p) + ".json"
     print(output_file)
     with open(output_file, "w") as fp:
         fp.write(formatted_final)    
@@ -155,12 +144,26 @@ def main(args):
     directory   = args.directory
     logging     = args.logging
 
+    ## Create output directories
+    try:
+        os.mkdir(directory + "/Strategy_statistics")
+        cprint("Creation of " + directory + "/Strategy_statistics directory", 'blue')
+    except FileExistsError:
+        cprint("Directory " + directory + "/Strategy_statistics already exists", 'blue')
+    except:
+        raise
+
     ## Multithread
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         future_f = {executor.submit(worker_f, directory, loss, logging): loss for loss in np.arange(0.01,0.1,0.01)}
 
         for future in concurrent.futures.as_completed(future_f):
             None
+
+    ## Write exceptional to file
+    output_file = directory + "/Strategy_statistics/exceptional.json"
+    with open(output_file, "w") as fp:
+        fp.write(json.dumps(exceptional, indent=4))
 
 
 
