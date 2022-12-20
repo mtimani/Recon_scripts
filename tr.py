@@ -146,13 +146,13 @@ def worker_f(directory, loss, strat, logging):
         except BinanceAPIException as e:
             ### Warning output to console if logging is enabled
             if logging:
-                cprint('[WARNING] Coin ' + coin + ' is not available with sl = ' + sl_p + ' and tp = ' + tp_p, 'orange')
+                cprint("[WARNING] Coin " + coin + " is not available with sl = " + str(sl_p) + " and tp = " + str(tp_p), 'yellow')
             continue
 
         except:
             ### Error output to console if logging is enabled
             if logging:
-                cprint('[ERROR] An error occured for ' + coin + ' with sl = ' + sl_p + ' and tp = ' + tp_p, 'red')
+                cprint('[ERROR] An error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
             continue
 
     ## Average calculation
@@ -173,7 +173,7 @@ def worker_f(directory, loss, strat, logging):
         fp.write(formatted_final)
     
     ## Display completion of the worker
-    cprint("\n[INFO] Simulation of strategy " + strategy + " with sl = " + sl_p + " and tp = " + tp_p + " is complete", 'blue')
+    cprint("\n[INFO] Simulation of strategy " + strategy + " with sl = " + str(sl_p) + " and tp = " + str(tp_p) + " is complete", 'blue')
 
     ## Display to console if the logging is on
     if logging:
