@@ -152,7 +152,7 @@ def worker_f(directory, loss, strat, logging):
         except:
             ### Error output to console if logging is enabled
             if logging:
-                cprint('[ERROR]\tAn error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
+                cprint('[ERROR]\t\tAn error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
             continue
 
     ## Average calculation
