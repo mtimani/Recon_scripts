@@ -146,13 +146,13 @@ def worker_f(directory, loss, strat, logging):
         except BinanceAPIException as e:
             ### Warning output to console if logging is enabled
             if logging:
-                cprint("[WARNING] Coin " + coin + " is not available with sl = " + str(sl_p) + " and tp = " + str(tp_p), 'yellow')
+                cprint("[WARNING]\tCoin " + coin + " is not available with sl = " + str(sl_p) + " and tp = " + str(tp_p), 'yellow')
             continue
 
         except:
             ### Error output to console if logging is enabled
             if logging:
-                cprint('[ERROR] An error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
+                cprint('[ERROR]\tAn error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
             continue
 
     ## Average calculation
@@ -173,7 +173,7 @@ def worker_f(directory, loss, strat, logging):
         fp.write(formatted_final)
     
     ## Display completion of the worker
-    cprint("\n[INFO] Simulation of strategy " + strategy + " with sl = " + str(sl_p) + " and tp = " + str(tp_p) + " is complete", 'blue')
+    cprint("\n[INFO]\t\tSimulation of strategy " + strategy + " with sl = " + str(sl_p) + " and tp = " + str(tp_p) + " is complete", 'blue')
 
     ## Display to console if the logging is on
     if logging:
@@ -226,10 +226,10 @@ def main(args):
     try:
         os.mkdir(directory + "/Strategy_" + strategy + "_statistics")
         if logging:
-            cprint("\n[INFO] Creation of " + directory + "/Strategy_" + strategy + "_statistics directory", 'blue')
+            cprint("\n[INFO]\t\tCreation of " + directory + "/Strategy_" + strategy + "_statistics directory", 'blue')
     except FileExistsError:
         if logging:
-            cprint("\n[INFO] Directory " + directory + "/Strategy_" + strategy + "_statistics already exists", 'blue')
+            cprint("\n[INFO]\t\tDirectory " + directory + "/Strategy_" + strategy + "_statistics already exists", 'blue')
         else:
             None
     except:
