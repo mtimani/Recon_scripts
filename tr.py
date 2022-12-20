@@ -189,6 +189,15 @@ class validateStrategyParameter(argparse.Action):
         if not (values in allowed_values):
             parser.error(f"Please enter a valid strategy number (between 1 and 7). Got: {values}")
         setattr(namespace, self.dest, values)
+
+
+
+#-----Validate Directory Parameter------#
+class validateDirectoryParameter(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not os.path.isdir(values):
+            parser.error(f"Please enter a valid directory to store results to. Got: {values}")
+        setattr(namespace, self.dest, values)
     
 
 
@@ -201,7 +210,7 @@ def parse_command_line():
     ## Arguments
     parser.add_argument("-l", "--logging", action='store_true', dest="logging", help="enable logging in the console")
     parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1 and 7 (default strategy: 1)", required=False, default="1", action=validateStrategyParameter)
-    required.add_argument("-d", "--directory", dest="directory", help="directory that will store results", required=True)
+    required.add_argument("-d", "--directory", dest="directory", help="directory that will store results", required=True, action=validateDirectoryParameter)
     return parser
 
 
