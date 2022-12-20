@@ -93,11 +93,6 @@ class DataTrader(Strategy):
                 self.buy(sl = self.sl, tp = self.tp)
             elif crossover(self.macd, self.macd_signal) and price < self.ema_1 and self.ema_1 < self.ema_2:
                 self.sell(sl = self.tp, tp = self.sl)
-        elif self.strat == "4":
-            if crossover(self.macd, self.macd_signal) and price < self.ema_1 and self.ema_1 < self.ema_2:
-                self.buy(sl = self.sl, tp = self.tp)
-            elif crossover(self.macd, self.macd_signal) and price > self.ema_1 and self.ema_1 > self.ema_2:
-                self.sell(sl = self.tp, tp = self.sl)
 
 
 
@@ -177,9 +172,9 @@ def worker_f(directory, strat, logging):
 #------Validate Strategy Parameter------#
 class validateStrategyParameter(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        allowed_values = ["1","2","3","4"]
+        allowed_values = ["1","2","3"]
         if not (values in allowed_values):
-            parser.error(f"Please enter a valid strategy number (between 1 and 4). Got: {values}")
+            parser.error(f"Please enter a valid strategy number (between 1 and 3). Got: {values}")
         setattr(namespace, self.dest, values)
 
 
@@ -201,7 +196,7 @@ def parse_command_line():
 
     ## Arguments
     parser.add_argument("-l", "--logging", action='store_true', dest="logging", help="enable logging in the console")
-    parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1 and 4 (default strategy: 1)", required=False, default="1", action=validateStrategyParameter)
+    parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1 and 3 (default strategy: 1)", required=False, default="1", action=validateStrategyParameter)
     required.add_argument("-d", "--directory", dest="directory", help="directory that will store results", required=True, action=validateDirectoryParameter)
     return parser
 
