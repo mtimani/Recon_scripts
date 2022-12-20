@@ -11,6 +11,8 @@ import os
 import os.path
 import concurrent.futures
 import numpy as np
+from random import uniform
+from time import sleep
 from pygments import highlight
 from collections import Counter 
 from pygments.formatters.terminal256 import Terminal256Formatter
@@ -19,7 +21,7 @@ from termcolor import colored, cprint
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
 from binance import Client
-from binance.exceptions import BinanceAPIException
+from binance.exceptions import NotImplementedException, BinanceAPIException
 
 
 
@@ -34,8 +36,6 @@ coins = ["AAVEUSDT","ABBCUSDT","ADAUSDT","ALGOUSDT","AMPUSDT","ANKRUSDT","ANTUSD
 
 
 #-----------Global variables------------#
-sl_p = 0
-tp_p = 0
 strategy = 0
 exceptional = []
 
@@ -55,78 +55,63 @@ def getData(symbol, start):
 
 #-------------Trading class-------------#
 class DataTrader(Strategy):
+    loss = 3
+    window_1 = 100
+    window_2 = 200
 
     def init(self):
         close = self.data.Close
         self.macd = self.I(ta.trend.macd, pd.Series(close))
         self.macd_signal = self.I(ta.trend.macd_signal, pd.Series(close))
-        self.ema_200 = self.I(ta.trend.ema_indicator, pd.Series(close), window=200)
-        self.ema_100 = self.I(ta.trend.ema_indicator, pd.Series(close), window=100)
-        self.ema_50 = self.I(ta.trend.ema_indicator, pd.Series(close), window=50)
-        self.ema_20  = self.I(ta.trend.ema_indicator, pd.Series(close), window=20)
-        global sl_p
-        global tp_p
+        self.ema_1 = self.I(ta.trend.ema_indicator, pd.Series(close), window=self.window_1)
+        self.ema_2 = self.I(ta.trend.ema_indicator, pd.Series(close), window=self.window_2)
+        self.sl_p = 1 - (self.loss / 10)
+        self.tp_p = 1 + 1.5 * (self.loss / 10)
+        self.sl = 0
+        self.tp = 0
         global strategy
-        self.sl_p = sl_p
-        self.tp_p = tp_p
         self.strat = strategy
 
     def next(self):
         price = self.data.Close
 
-        sl = price * self.sl_p
-        tp = price * self.tp_p
+        self.sl = price * self.sl_p
+        self.tp = price * self.tp_p
 
         if self.strat == "1":
-            if crossover(self.macd, self.macd_signal) and price < self.ema_200:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price > self.ema_200:
-                self.sell(sl = tp, tp = sl)
+            if crossover(self.macd, self.macd_signal) and price < self.ema_1:
+                self.buy(sl = self.sl, tp = self.tp)
+            elif crossover(self.macd, self.macd_signal) and price > self.ema_1:
+                self.sell(sl = self.tp, tp = self.sl)
         elif self.strat == "2":
-            if crossover(self.macd, self.macd_signal) and price < self.ema_100:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price > self.ema_100:
-                self.sell(sl = tp, tp = sl)
+            if crossover(self.macd, self.macd_signal) and price > self.ema_1:
+                self.buy(sl = self.sl, tp = self.tp)
+            elif crossover(self.macd, self.macd_signal) and price < self.ema_1:
+                self.sell(sl = self.tp, tp = self.sl)
         elif self.strat == "3":
-            if crossover(self.macd, self.macd_signal) and price < self.ema_50:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price > self.ema_50:
-                self.sell(sl = tp, tp = sl)
+            if crossover(self.macd, self.macd_signal) and price > self.ema_1 and self.ema_1 > self.ema_2:
+                self.buy(sl = self.sl, tp = self.tp)
+            elif crossover(self.macd, self.macd_signal) and price < self.ema_1 and self.ema_1 < self.ema_2:
+                self.sell(sl = self.tp, tp = self.sl)
         elif self.strat == "4":
-            if crossover(self.macd, self.macd_signal) and price > self.ema_200:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price < self.ema_200:
-                self.sell(sl = tp, tp = sl)
-        elif self.strat == "5":
-            if crossover(self.macd, self.macd_signal) and price > self.ema_100:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price < self.ema_100:
-                self.sell(sl = tp, tp = sl)
-        elif self.strat == "6":
-            if crossover(self.macd, self.macd_signal) and price > self.ema_50:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price < self.ema_50:
-                self.sell(sl = tp, tp = sl)
-        elif self.strat == "7":
-            if crossover(self.macd, self.macd_signal) and price > self.ema_20 and self.ema_20 > self.ema_50:
-                self.buy(sl = sl, tp = tp)
-            elif crossover(self.macd, self.macd_signal) and price < self.ema_20 and self.ema_20 < self.ema_50:
-                self.sell(sl = tp, tp = sl)
+            if crossover(self.macd, self.macd_signal) and price < self.ema_1 and self.ema_1 < self.ema_2:
+                self.buy(sl = self.sl, tp = self.tp)
+            elif crossover(self.macd, self.macd_signal) and price > self.ema_1 and self.ema_1 > self.ema_2:
+                self.sell(sl = self.tp, tp = self.sl)
 
 
 
 #--Worker running different strategies--#
-def worker_f(directory, loss, strat, logging):
+def worker_f(directory, strat, logging):
     ## Variable initialization
     results = {}
 
-    global sl_p
-    global tp_p
     global strategy
+    strategy = strat 
 
-    sl_p = 1 - loss
-    tp_p = 1 + 1.5 * loss
-    strategy = strat
+    ## Variable init for average calculations
+    sum_of_values = 0
+    number_of_values = 0
 
     ## Execute strategy for all coins
     for coin in coins:
@@ -134,46 +119,53 @@ def worker_f(directory, loss, strat, logging):
             ### Backtesting for specific coin
             df = getData(coin, '2022-01-01')
             bt = Backtest(df, DataTrader, cash = 100000, commission = 0.0015)
-            output = bt.run()
+            output = bt.optimize(loss=range(1,11,1),window_1=[20,50,100,200])
+
+            loss = float(str(output._strategy).split('loss=')[1].split(',')[0]) / 100
+            sl_p = 1 - loss
+            tp_p = 1 + 1.5 * loss
+            
+            window = float(str(output._strategy).split('window_1=')[1].split(')')[0]) 
 
             ### Store results
-            results[coin] = output['Return [%]']
+            results[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "return": output['Return [%]']}
 
-            ## Exceptional values calculation
+            ### Average calculations
+            sum_of_values += output['Return [%]']
+            number_of_values += 1
+
+            ### Exceptional values calculation
             if output['Return [%]'] > 100:
-                exceptional.append({"sl": sl_p, "tp": tp_p, "coin": coin, "average": output['Return [%]']})
+                exceptional.append({"sl": sl_p, "tp": tp_p, "ema_window": window, "coin": coin, "average": output['Return [%]']})
 
         except BinanceAPIException as e:
             ### Warning output to console if logging is enabled
             if logging:
-                cprint("[WARNING]\tCoin " + coin + " is not available with sl = " + str(sl_p) + " and tp = " + str(tp_p), 'yellow')
+                cprint("[WARNING]\tCoin " + coin + " is not available with sl = " + str(sl_p) + ", tp = " + str(tp_p) + " and window = " + str(window), 'yellow')
             continue
 
         except:
             ### Error output to console if logging is enabled
             if logging:
-                cprint('[ERROR]\t\tAn error occured for ' + coin + ' with sl = ' + str(sl_p) + ' and tp = ' + str(tp_p), 'red')
+                cprint('[ERROR]\t\tAn error occured for ' + coin + ' with sl = ' + str(sl_p) + ', tp = ' + str(tp_p) + ' and window = ' + str(window), 'red')
             continue
 
     ## Average calculation
-    average = 0
-    for val in results.values():
-        average += val
-    average = average / len(results)
+    average = sum_of_values / number_of_values
 
     ## Final json formatting
-    final = {"sl": sl_p, "tp": tp_p, "average": average, "results": results}
+    final = {"average": average, "results": results}
     formatted_final = json.dumps(final, indent=4)
 
     ## Write into output directory
     output_dir = directory + "/Strategy_" + strategy + "_statistics/"
-    output_file = output_dir + "sl_" + str(sl_p) + "_tp_" + str(tp_p) + ".json"
+    output_file = output_dir + "optimized_out.json"
     
     with open(output_file, "w") as fp:
         fp.write(formatted_final)
     
     ## Display completion of the worker
-    cprint("\n[INFO]\t\tSimulation of strategy " + strategy + " with sl = " + str(sl_p) + " and tp = " + str(tp_p) + " is complete", 'blue')
+    cprint("\n[INFO]\t\tSimulation of strategy " + strategy + " is complete", 'blue')
 
     ## Display to console if the logging is on
     if logging:
@@ -185,9 +177,9 @@ def worker_f(directory, loss, strat, logging):
 #------Validate Strategy Parameter------#
 class validateStrategyParameter(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        allowed_values = ["1","2","3","4","5","6","7"]
+        allowed_values = ["1","2","3","4"]
         if not (values in allowed_values):
-            parser.error(f"Please enter a valid strategy number (between 1 and 7). Got: {values}")
+            parser.error(f"Please enter a valid strategy number (between 1 and 4). Got: {values}")
         setattr(namespace, self.dest, values)
 
 
@@ -209,7 +201,7 @@ def parse_command_line():
 
     ## Arguments
     parser.add_argument("-l", "--logging", action='store_true', dest="logging", help="enable logging in the console")
-    parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1 and 7 (default strategy: 1)", required=False, default="1", action=validateStrategyParameter)
+    parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1 and 4 (default strategy: 1)", required=False, default="1", action=validateStrategyParameter)
     required.add_argument("-d", "--directory", dest="directory", help="directory that will store results", required=True, action=validateDirectoryParameter)
     return parser
 
@@ -235,12 +227,7 @@ def main(args):
     except:
         raise
 
-    ## Multithread
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_f = {executor.submit(worker_f, directory, loss, strategy, logging): loss for loss in np.arange(0.01,0.1,0.01)}
-
-        for future in concurrent.futures.as_completed(future_f):
-            None
+    worker_f(directory, strategy, logging)
 
     ## Write exceptional to file
     output_file = directory + "/Strategy_" + strategy + "_statistics/exceptional.json"
