@@ -37,7 +37,7 @@ coins = ["AAVEUSDT","ABBCUSDT","ADAUSDT","ALGOUSDT","AMPUSDT","ANKRUSDT","ANTUSD
 
 #-----------Global variables------------#
 strategy = 0
-exceptional = []
+exceptional = {}
 
 
 
@@ -131,7 +131,7 @@ def worker_f(directory, strat, max_losses, ema_window, logging):
 
             ### Exceptional values calculation
             if output['Return [%]'] > 100:
-                exceptional.append({"sl": sl_p, "tp": tp_p, "ema_window": window, "coin": coin, "average": output['Return [%]']})
+                exceptional[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "average": output['Return [%]']}
 
         except BinanceAPIException as e:
             ### Warning output to console if logging is enabled
