@@ -12,6 +12,7 @@ import os.path
 import concurrent.futures
 import numpy as np
 from pygments import highlight
+from collections import Counter 
 from pygments.formatters.terminal256 import Terminal256Formatter
 from pygments.lexers.web import JsonLexer
 from termcolor import colored, cprint
@@ -35,6 +36,7 @@ coins = ["AAVEUSDT","ABBCUSDT","ADAUSDT","ALGOUSDT","AMPUSDT","ANKRUSDT","ANTUSD
 #-----------Global variables------------#
 sl_p = 0
 tp_p = 0
+strategy = 0
 exceptional = []
 
 
@@ -58,31 +60,52 @@ class DataTrader(Strategy):
         close = self.data.Close
         self.macd = self.I(ta.trend.macd, pd.Series(close))
         self.macd_signal = self.I(ta.trend.macd_signal, pd.Series(close))
+        self.ema_50 = self.I(ta.trend.ema_indicator, pd.Series(close), window=100)
         self.ema_50 = self.I(ta.trend.ema_indicator, pd.Series(close), window=50)
         self.ema_20  = self.I(ta.trend.ema_indicator, pd.Series(close), window=20)
+        global sl_p
+        global tp_p
+        global strategy
+        self.sl_p = sl_p
+        self.tp_p = tp_p
+        self.strat = strategy
 
     def next(self):
         price = self.data.Close
 
-        global sl_p
-        global tp_p
+        sl = price * self.sl_p
+        tp = price * self.tp_p
 
-        sl = price * sl_p
-        tp = price * tp_p
-
-        if crossover(self.macd, self.macd_signal) and price > self.ema_20 and self.ema_20 > self.ema_50:
-            self.buy(sl = sl, tp = tp)
-        elif crossover(self.macd, self.macd_signal) and price < self.ema_20 and self.ema_20 < self.ema_50:
-            self.sell(sl = tp, tp = sl)
+        if self.strat == "1":
+            if crossover(self.macd, self.macd_signal) and price < self.ema_100:
+                self.buy(sl = sl, tp = tp)
+            elif crossover(self.macd, self.macd_signal) and price > self.ema_100:
+                self.sell(sl = tp, tp = sl)
+        elif self.strat == "2":
+            if crossover(self.macd, self.macd_signal) and price < self.ema_50:
+                self.buy(sl = sl, tp = tp)
+            elif crossover(self.macd, self.macd_signal) and price > self.ema_50:
+                self.sell(sl = tp, tp = sl)
+        elif self.strat == "3":
+            if crossover(self.macd, self.macd_signal) and price > self.ema_20 and self.ema_20 > self.ema_50:
+                self.buy(sl = sl, tp = tp)
+            elif crossover(self.macd, self.macd_signal) and price < self.ema_20 and self.ema_20 < self.ema_50:
+                self.sell(sl = tp, tp = sl)
 
 
 
 #--Worker running different strategies--#
-def worker_f(directory, loss, logging):
+def worker_f(directory, loss, strat, logging):
     ## Variable initialization
     results = {}
+
+    global sl_p
+    global tp_p
+    global strategy
+
     sl_p = 1 - loss
     tp_p = 1 + 3 * loss
+    strategy = strat
 
     for coin in coins:
         try:
@@ -117,11 +140,20 @@ def worker_f(directory, loss, logging):
         print(colorful)
 
     ## Write into output directory
-    output_dir = directory + "/Strategy_statistics/"
+    output_dir = directory + "/Strategy_" + strategy + "_statistics/"
     output_file = output_dir + "sl_" + str(sl_p) + "_tp_" + str(tp_p) + ".json"
     print(output_file)
     with open(output_file, "w") as fp:
-        fp.write(formatted_final)    
+        fp.write(formatted_final)
+
+
+
+#------Validate Strategy Parameter------#
+class validateStrategyParameter(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values != "1" and values != "2" and values != "3":
+            parser.error(f"Please enter a valid strategy number (1, 2 or 3). Got: {values}")
+        setattr(namespace, self.dest, values)
     
 
 
@@ -133,6 +165,7 @@ def parse_command_line():
 
     ## Arguments
     parser.add_argument("-l", "--logging", action='store_true', dest="logging", help="enable logging in the console")
+    parser.add_argument("-s", "--strategy", dest="strategy", help="choose strategy between 1, 2 or 3", required=False, default=1, action=validateStrategyParameter)
     required.add_argument("-d", "--directory", dest="directory", help="directory that will store results", required=True)
     return parser
 
@@ -143,27 +176,32 @@ def main(args):
     ## Variables
     directory   = args.directory
     logging     = args.logging
+    strategy    = args.strategy
 
     ## Create output directories
     try:
-        os.mkdir(directory + "/Strategy_statistics")
-        cprint("Creation of " + directory + "/Strategy_statistics directory", 'blue')
+        os.mkdir(directory + "/Strategy_" + strategy + "_statistics")
+        cprint("Creation of " + directory + "/Strategy_" + strategy + "_statistics directory", 'blue')
     except FileExistsError:
-        cprint("Directory " + directory + "/Strategy_statistics already exists", 'blue')
+        cprint("Directory " + directory + "/Strategy_" + strategy + "_statistics already exists", 'blue')
     except:
         raise
 
     ## Multithread
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        future_f = {executor.submit(worker_f, directory, loss, logging): loss for loss in np.arange(0.01,0.1,0.01)}
+        future_f = {executor.submit(worker_f, directory, loss, strategy, logging): loss for loss in np.arange(0.01,0.1,0.01)}
 
         for future in concurrent.futures.as_completed(future_f):
             None
 
     ## Write exceptional to file
-    output_file = directory + "/Strategy_statistics/exceptional.json"
+    output_file = directory + "/Strategy_" + strategy + "_statistics/exceptional.json"
     with open(output_file, "w") as fp:
         fp.write(json.dumps(exceptional, indent=4))
+
+    ## Add Counter functionality
+
+    
 
 
 
