@@ -153,7 +153,7 @@ def worker_f(directory, strat, logging):
     formatted_final = json.dumps(final, indent=4)
 
     ## Write into output directory
-    output_dir = directory + "/Strategy_" + strategy + "_statistics/"
+    output_dir = directory + "/Strategy_" + strategy + "_testing/"
     output_file = output_dir + "optimized_out.json"
     
     with open(output_file, "w") as fp:
@@ -211,12 +211,12 @@ def main(args):
 
     ## Create output directories
     try:
-        os.mkdir(directory + "/Strategy_" + strategy + "_statistics")
+        os.mkdir(directory + "/Strategy_" + strategy + "_testing")
         if logging:
-            cprint("\n[INFO]\t\tCreation of " + directory + "/Strategy_" + strategy + "_statistics directory", 'blue')
+            cprint("\n[INFO]\t\tCreation of " + directory + "/Strategy_" + strategy + "_testing directory", 'blue')
     except FileExistsError:
         if logging:
-            cprint("\n[INFO]\t\tDirectory " + directory + "/Strategy_" + strategy + "_statistics already exists", 'blue')
+            cprint("\n[INFO]\t\tDirectory " + directory + "/Strategy_" + strategy + "_testing already exists", 'blue')
         else:
             None
     except:
@@ -225,7 +225,7 @@ def main(args):
     worker_f(directory, strategy, logging)
 
     ## Write exceptional to file
-    output_file = directory + "/Strategy_" + strategy + "_statistics/exceptional.json"
+    output_file = directory + "/Strategy_" + strategy + "_testing/exceptional.json"
     with open(output_file, "w") as fp:
         fp.write(json.dumps(exceptional, indent=4))
 
