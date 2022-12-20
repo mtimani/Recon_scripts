@@ -120,10 +120,10 @@ def worker_f(directory, strat, logging):
             sl_p = 1 - loss
             tp_p = 1 + 1.5 * loss
             
-            window = float(str(output._strategy).split('window_1=')[1].split(')')[0]) 
-
+            window = float(str(output._strategy).split('window_1=')[1].split(')')[0])
+            
             ### Store results
-            results[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "return": output['Return [%]']}
+            results[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "strategy": strategy, "return": output['Return [%]']}
 
             ### Average calculations
             sum_of_values += output['Return [%]']
@@ -131,7 +131,7 @@ def worker_f(directory, strat, logging):
 
             ### Exceptional values calculation
             if output['Return [%]'] > 100:
-                exceptional[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "coin": coin, "average": output['Return [%]']}
+                exceptional[coin] = {"sl": sl_p, "tp": tp_p, "ema_window": window, "coin": coin, "strategy": strategy, "average": output['Return [%]']}
 
         except BinanceAPIException as e:
             ### Warning output to console if logging is enabled
