@@ -48,7 +48,7 @@ mutually exclusive arguments:
 ## Asset_discovery.py script
 
 ### Description
-Small script that allows to do DNS asset discovery, Nuclei scans, take screen of found web assets by combining the output of several tools.
+Small script that allows to do DNS asset discovery, Nuclei scans, take screenshots of found web assets by combining the output of several tools.
 
 The script needs a root_domain to bruteforce and an output_directory as arguments.
 Ex: asset_discovery.py -d $(pwd) -l target.com -n -s
