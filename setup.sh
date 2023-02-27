@@ -28,7 +28,8 @@ sudo mv webanalyze /usr/bin
 wget -c "https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz"
 tar -xzvf gau_2.1.2_linux_amd64.tar.gz
 sudo mv gau /usr/bin/
-d /opt
+cd /opt
+sudo git clone https://github.com/danielmiessler/SecLists.git
 sudo git clone https://github.com/ShutdownRepo/httpmethods
 sudo chown -R $(echo "$USER"):$(echo "$USER") /opt/httpmethods
 cd /opt/httpmethods
