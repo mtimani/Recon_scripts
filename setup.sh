@@ -17,8 +17,10 @@ git clone https://github.com/hvs-consulting/SANextract
 sudo git clone "https://github.com/jtesta/ssh-audit.git"
 sudo chown -R $(echo "$USER"):$(echo "$USER") /opt/ssh-audit
 cd SANextract
-go build
 chown -R $(echo "$USER"):$(echo "$USER") /opt/SANextract
+go mod init SANextract
+go build
+cd /opt/
 wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitness-2.4.2-linux-amd64" && mv gowitness* gowitness && chmod +x gowitness && sudo mv gowitness /usr/bin
 wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
 tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
@@ -27,6 +29,7 @@ rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
 sudo mv webanalyze /usr/bin
 wget -c "https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz"
 tar -xzvf gau_2.1.2_linux_amd64.tar.gz
+rm -rf gau_2.1.2_linux_amd64.tar.gz
 sudo mv gau /usr/bin/
 cd /opt
 sudo git clone https://github.com/danielmiessler/SecLists.git
@@ -34,4 +37,4 @@ sudo git clone https://github.com/ShutdownRepo/httpmethods
 sudo chown -R $(echo "$USER"):$(echo "$USER") /opt/httpmethods
 cd /opt/httpmethods
 sudo python3 setup.py install
-rm -rf gau_2.1.2_linux_amd64.tar.gz LICENSE README.md
+rm -rf LICENSE README.md
