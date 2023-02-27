@@ -366,6 +366,7 @@ def webanalyzer_f(directory, found_domains):
     for (dirpath, folder_names, files) in os.walk(directory + "/Webanalyzer/"):
         for filename in files:
             file_location = dirpath + '/' + filename
+            filename_domain = filename.split('.json')[0]
             if os.path.isfile(file_location):
                 with open(file_location, "r") as fp:
                     try:
@@ -378,12 +379,12 @@ def webanalyzer_f(directory, found_domains):
                             technologies[techs] = {"number": 1, "versions": [], "hostname_versions": {}}
                         if element['version'] != "":
                             technologies[techs]['versions'].append(element['version'])
-                            technologies[techs]['hostname_versions'][filename] = element['version']
+                            technologies[techs]['hostname_versions'][filename_domain] = element['version']
                         else:
-                            technologies[techs]['hostname_versions'][filename] = ""
+                            technologies[techs]['hostname_versions'][filename_domain] = "NaN"
                     except:
-                        cprint("\tError running webanalyzer for: " + filename + "\n", 'red')
-    
+                        cprint("\tError running webanalyzer for: " + filename_domain + "\n", 'red')
+
     ## Write technologies statistics to file
     with open(directory + "/technologies_statistics.json", "w") as fp:
         fp.write(json.dumps(technologies, sort_keys=False, indent=4))
