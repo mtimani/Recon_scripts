@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-sudo apt-get update && sudo apt-get install subfinder jq nuclei gccgo-go -y
+sudo apt-get update && sudo apt-get install subfinder jq nuclei gccgo-go whois -y
 pip3 install aiodnsbrute
 pip3 install cidrize
 pip2 install hsecscan
