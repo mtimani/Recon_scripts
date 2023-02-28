@@ -26,6 +26,7 @@ SANextract_path                 = "/opt/SANextract/SANextract"
 webanalyze_path                 = "/usr/bin/webanalyze"
 gau_path                        = "/usr/bin/gau"
 gowitness_path                  = "/usr/bin/gowitness"
+eyewitness_path                 = "/usr/bin/eyewitness"
 
 
 
@@ -309,7 +310,7 @@ def screenshot_f(directory):
     cprint("\nScreenshots of found web assets with EyeWitness launched!\n",'red')
     
     ## EyeWitness tool launch
-    os.system("eyewitness --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots + -f " + directory + "/domain_list.txt")
+    os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots + -f " + directory + "/domain_list.txt")
 
 
 
