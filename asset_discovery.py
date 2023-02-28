@@ -288,17 +288,19 @@ def nuclei_f(directory):
             low         = "[low]"
             
             for line in f_read.readlines():
-                if ((to_remove_1 not in line) and (to_remove_2 not in line)):
-                    if (critical in line):
-                        to_write["critical"].append(line)
-                    elif (high in line):
-                        to_write["high"].append(line)
-                    elif (medium in line):
-                        to_write["medium"].append(line)
-                    elif (low in line):
-                        to_write["low"].append(line)
-                    else:
-                        to_write["other"].append(line)
+                l = line.rstrip()
+                if ((to_remove_1 not in l) and (to_remove_2 not in l)):
+                    if (l != "]"):
+                        if (critical in l):
+                            to_write["critical"].append(l)
+                        elif (high in l):
+                            to_write["high"].append(l)
+                        elif (medium in l):
+                            to_write["medium"].append(l)
+                        elif (low in l):
+                            to_write["low"].append(l)
+                        else:
+                            to_write["other"].append(l)
 
             f_write.write(json.dumps(to_write, indent=4))
 
