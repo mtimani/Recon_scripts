@@ -310,7 +310,7 @@ def screenshot_f(directory):
     cprint("\nScreenshots of found web assets with EyeWitness launched!\n",'red')
     
     ## EyeWitness tool launch
-    os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots + -f " + directory + "/domain_list.txt")
+    os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots -f " + directory + "/domain_list.txt")
 
 
 
