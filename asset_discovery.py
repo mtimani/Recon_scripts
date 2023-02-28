@@ -277,9 +277,10 @@ def nuclei_f(directory):
     ## Extract interresting findings
     with open(dir_path + "/nuclei_all_findings.txt", "r") as f_read:
         with open(dir_path + "/nuclei_important_findings.txt", "w") as f_write:
-            to_remove = "[dns]"
+            to_remove_1 = "[dns]"
+            to_remove_2 = "[info]"
             for line in f_read.readlines():
-                if (to_remove not in line):
+                if ((to_remove_1 not in line) and (to_remove_2 not in line)):
                     f_write.write(line)
 
 
