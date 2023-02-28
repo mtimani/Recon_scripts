@@ -60,7 +60,7 @@ usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FI
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
-  -s, --screenshot      Use Gowitness to take screenshots of found web assets
+  -s, --screenshot      Use EyeWitness to take screenshots of found web assets
   -w, --webanalyzer     Use Webanalyzer to list used web technologies
   -g, --gau             Use gau tool to find interresting URLs on found web assets
 
