@@ -276,12 +276,30 @@ def nuclei_f(directory):
 
     ## Extract interresting findings
     with open(dir_path + "/nuclei_all_findings.txt", "r") as f_read:
-        with open(dir_path + "/nuclei_important_findings.txt", "w") as f_write:
+        with open(dir_path + "/nuclei_important_findings.json", "w") as f_write:
+            ### Variable initialization
+            to_write    = {"critical": [], "high": [], "medium": [], "low": [], "other": []}
             to_remove_1 = "[dns]"
             to_remove_2 = "[info]"
+            critical    = "[critical]" 
+            high        = "[high]"
+            medium      = "[medium]"
+            low         = "[low]"
+            
             for line in f_read.readlines():
                 if ((to_remove_1 not in line) and (to_remove_2 not in line)):
-                    f_write.write(line)
+                    if (critical in line):
+                        to_write["critical"].append(line)
+                    elif (high in line):
+                        to_write["high"].append(line)
+                    elif (medium in line):
+                        to_write["medium"].append(line)
+                    elif (low in line):
+                        to_write["low"].append(line)
+                    else:
+                        to_write["other"].append(line)
+
+            f_write.write(json.dumps(to_write, indent=4))
 
 
 
@@ -290,16 +308,8 @@ def screenshot_f(directory):
     ## Print to console
     cprint("\nScreenshots of found web assets with Gowitness launched!\n",'red')
     
-    ## Gowitness tool launch
-    try:
-        os.mkdir(directory + "/Screenshots")
-        cprint("Creation of " + directory + "/Screenshots directory", 'blue')
-    except FileExistsError:
-        cprint("Directory " + directory + "/Screenshots already exists", 'blue')
-    except:
-        raise
-
-    os.system(gowitness_path + " file --disable-db --disable-logging -P " + directory + "/Screenshots/ -f " + directory + "/domain_list.txt")
+    ## EyeWitness tool launch
+    os.system("eyewitness --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots + -f " + directory + "/domain_list.txt")
 
 
 
