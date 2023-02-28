@@ -306,7 +306,7 @@ def nuclei_f(directory):
 #---------Screenshot Function Launch--------#
 def screenshot_f(directory):
     ## Print to console
-    cprint("\nScreenshots of found web assets with Gowitness launched!\n",'red')
+    cprint("\nScreenshots of found web assets with EyeWitness launched!\n",'red')
     
     ## EyeWitness tool launch
     os.system("eyewitness --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots + -f " + directory + "/domain_list.txt")
