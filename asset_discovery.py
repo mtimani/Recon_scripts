@@ -39,7 +39,7 @@ usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FI
 options:
   -h, --help            show this help message and exit
   -n, --nuclei          Use Nuclei scanner to scan found assets
-  -s, --screenshot      Use Gowitness to take screenshots of found web assets
+  -s, --screenshot      Use EyeWitness to take screenshots of found web assets
   -w, --webanalyzer     Use Webanalyzer to list used web technologies
   -g, --gau             Use gau tool to find interresting URLs on found web assets
 
@@ -428,7 +428,7 @@ def parse_command_line():
 
     ## Arguments
     parser.add_argument("-n", "--nuclei", dest='n', action='store_true', help="Use Nuclei scanner to scan found assets")
-    parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use Gowitness to take screenshots of found web assets")
+    parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use EyeWitness to take screenshots of found web assets")
     parser.add_argument("-w", "--webanalyzer", dest='w', action='store_true', help="Use Webanalyzer to list used web technologies")
     parser.add_argument("-g", "--gau", dest='g', action='store_true', help="Use gau tool to find interresting URLs on found web assets")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
