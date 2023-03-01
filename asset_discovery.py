@@ -114,11 +114,33 @@ def domains_discovery(directory, hosts):
     ## First domain scan function call
     found_domains = first_domain_scan(directory, hosts)
 
+    ## httpx - project discovery
+    cprint("Running httpx\n", 'red')
+
+    domains_string = ','.join(found_domains)
+    bashCommand = "httpx -u " + domains_string + " -p http:80,https:443,http:8080,https:8443,http:8000,http:3000,http:5000,http:10000 -timeout 3 -probe"
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    out = output.decode('ascii').splitlines()
+    
+    urls = []
+
+    for line in out:
+        if ("FAILED" not in line):
+            url = line.split('[')[0].strip()
+            urls.append(url)
+
+    with open(directory + "/httpx_results.txt", "w") as fp:
+        for item in urls:
+            fp.write("%s\n" % item)
+
     ## SANextract
+    cprint("Running SANextract\n", 'red')
+
     temp = []
-    for i in found_domains:
+    for i in urls:
         bashCommand_1 = "echo " + i
-        bashCommand_2 = SANextract_path
+        bashCommand_2 = SANextract_path + " -timeout 1s"
         p1 = subprocess.Popen(bashCommand_1.split(), stdout=subprocess.PIPE)
         p2 = subprocess.Popen(bashCommand_2.split(), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for j in p2.stdout.read().decode('ascii').splitlines():
