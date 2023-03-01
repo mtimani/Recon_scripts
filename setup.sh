@@ -38,3 +38,4 @@ sudo chown -R $(echo "$USER"):$(echo "$USER") /opt/httpmethods
 cd /opt/httpmethods
 sudo python3 setup.py install
 rm -rf LICENSE README.md
+go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
