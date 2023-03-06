@@ -8,7 +8,9 @@ import os
 import os.path
 import subprocess
 import socket
+import threading
 import json
+import alive_progress
 import concurrent.futures
 import ipaddress
 from cidrize import cidrize
@@ -27,6 +29,11 @@ webanalyze_path                 = "/usr/bin/webanalyze"
 gau_path                        = "/usr/bin/gau"
 gowitness_path                  = "/usr/bin/gowitness"
 eyewitness_path                 = "/usr/bin/eyewitness"
+
+
+
+#-----------Global variables------------#
+to_remove                       = []
 
 
 
@@ -58,6 +65,41 @@ mutually exclusive arguments:
 def exit_abnormal():
     usage()
     sys.exit()
+
+
+
+#----------DNS resolution worker----------#
+def dns_worker_f(hostnames):
+    for host in hostnames:
+        try:
+            a = socket.gethostbyname("d5a0a55b307ac269a9333a6d6da1bc108b50581a." + host)
+            if (a != ""):
+                to_remove.append(host)
+        except Exception as e:
+            continue
+
+
+
+#-------DNS multithreaded resolution------#
+def dns_resolver(hostnames):
+    ## Variable initialization
+    global to_remove 
+    to_remove = []
+    
+    ## Threading initialization
+    threads = list()
+    chunksize = 100
+    chunks = [hostnames[i:i + chunksize] for i in range(0, len(hostnames), chunksize)]
+    for chunk in chunks:
+        x = threading.Thread(target=dns_worker_f, args=(chunk,))
+        threads.append(x)
+        x.start()
+    for chunk, thread in enumerate(threads):
+        thread.join()
+
+    hostnames = [x for x in hostnames if x not in to_remove]
+
+    return(hostnames)
 
 
 
@@ -95,8 +137,10 @@ def first_domain_scan(directory, hosts):
     ## Print to console
     cprint("Finding subdomains for specified root domains:\n", 'red')
 
+    counter = len(root_domains)
+
     ## Loop over root domains
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         future_f = {executor.submit(worker_f, directory, root_domain, found_domains): root_domain for root_domain in root_domains}
         
         for future in concurrent.futures.as_completed(future_f):
@@ -114,11 +158,18 @@ def domains_discovery(directory, hosts):
     ## First domain scan function call
     found_domains = first_domain_scan(directory, hosts)
 
+    ## Remove wildcard domains
+    cprint("Running wildcard DNS cleaning function\n", 'red')
+    cleaned_domains = dns_resolver(found_domains)
+
     ## httpx - project discovery
     cprint("Running httpx\n", 'red')
 
-    domains_string = ','.join(found_domains)
-    bashCommand = "httpx -u " + domains_string + " -p http:80,https:443,http:8080,https:8443,http:8000,http:3000,http:5000,http:10000 -timeout 3 -probe"
+    with open(directory + "/found_domains.txt.tmp", "w") as fp:
+        for item in cleaned_domains:
+            fp.write("%s\n" % item)
+
+    bashCommand = "httpx -l " + directory + "/found_domains.txt.tmp -t 150 -rl 3000 -p http:80,https:443,http:8080,https:8443,http:8000,http:3000,http:5000,http:10000 -timeout 3 -probe"
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     out = output.decode('ascii').splitlines()
@@ -134,6 +185,9 @@ def domains_discovery(directory, hosts):
         for item in urls:
             fp.write("%s\n" % item)
 
+    if os.path.exists(directory + "/found_domains.txt.tmp"):
+        os.remove(directory + "/found_domains.txt.tmp")
+
     ## SANextract
     cprint("Running SANextract\n", 'red')
 
@@ -146,15 +200,19 @@ def domains_discovery(directory, hosts):
         for j in p2.stdout.read().decode('ascii').splitlines():
             if j[0] != '*':
                 temp.append(j)
-    found_domains.extend(temp)
-    found_domains = sorted(set(found_domains))
+
+    ## Remove wildcard domains (again)
+    cprint("Running wildcard DNS cleaning function\n", 'red')
+    cleaned_temp = dns_resolver(temp)
+    cleaned_domains.extend(cleaned_temp)
+    cleaned_domains = sorted(set(cleaned_domains))
 
     ## Write found domains to a file
     with open(directory+"/domain_list.txt","w") as fp:
-        for item in found_domains:
+        for item in cleaned_domains:
             fp.write("%s\n" % item)
 
-    return found_domains
+    return cleaned_domains
 
 
 
@@ -168,18 +226,22 @@ def IP_discovery(directory, found_domains):
     ip_list = []
     keys = range(len(found_domains))
 
+    counter = len(found_domains)
+
     ## IP addresses lookup
-    for domain in found_domains:
-        try:
-            ais = socket.getaddrinfo(domain,0,socket.AF_INET,0,0)
-            IPs = []
-            for result in ais:
-                IPs.append(result[-1][0])
-                ip_list.append(result[-1][0])
-            IPs = sorted(set(IPs))
-            ip_dict[domain] = IPs.copy()
-        except socket.gaierror:
-            None
+    with alive_progress.alive_bar(counter, ctrl_c=True, title=f'IP address resolution') as bar:
+        for domain in found_domains:
+            bar()
+            try:
+                ais = socket.getaddrinfo(domain,0,socket.AF_INET,0,0)
+                IPs = []
+                for result in ais:
+                    IPs.append(result[-1][0])
+                    ip_list.append(result[-1][0])
+                IPs = sorted(set(IPs))
+                ip_dict[domain] = IPs.copy()
+            except:
+                None
     
     ## Sort and uniq IP addresses
     ip_list = sorted(set(ip_list))
@@ -210,15 +272,19 @@ def whois(directory,ip_list,ip_dict):
     whois_list = []
     whois_dict = {}
 
+    counter = len(ip_list)
+
     ## Whois list retreival
-    for ip in ip_list:
-        try:
-            bashCommand = "whois " + ip
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-            whois_list.append(output.decode('ascii'))
-        except:
-            cprint("Error: Failed to whois the following IP address : " + ip + "\n", 'red')
+    with alive_progress.alive_bar(counter, ctrl_c=True, title=f'Whois resolution') as bar:
+        for ip in ip_list:
+            bar()
+            try:
+                bashCommand = "whois " + ip
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                output, error = process.communicate()
+                whois_list.append(output.decode('ascii'))
+            except:
+                cprint("Error: Failed to whois the following IP address : " + ip + "\n", 'red')
 
     ## Sort - Uniq on the retreived whois_list
     whois_list = sorted(set(whois_list))
@@ -239,8 +305,12 @@ def whois(directory,ip_list,ip_dict):
                 break
         
         ## Uniformize Filename
-        cidr = str(cidrize(filename, strict=True)[0])
-        filename = cidr.replace("/","_").strip() + ".txt"
+        try:
+            cidr = str(cidrize(filename, strict=True)[0])
+            filename = cidr.replace("/","_").strip() + ".txt"
+        except:
+            cprint("Cidrize failed for: " + filename + "\n", "red")
+            continue
 
         ### Write to file
         with open(directory + "/Whois/" + filename,"w") as fp:
@@ -382,12 +452,15 @@ def webanalyzer_f(directory, found_domains):
     except:
         raise
 
+    counter = len(found_domains)
+
     ## Loop through found domains & multithread
-    with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
-        future_f = {executor.submit(webanalyzer_worker, directory, domain): domain for domain in found_domains}
-        
-        for future in concurrent.futures.as_completed(future_f):
-            None
+    with alive_progress.alive_bar(counter, ctrl_c=True, title=f'Webanalyze progress') as bar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+            future_f = {executor.submit(webanalyzer_worker, directory, domain): domain for domain in found_domains}
+            
+            for future in concurrent.futures.as_completed(future_f):
+                bar()
 
     ## Remove empty files
     for (dirpath, folder_names, files) in os.walk(directory + "/Webanalyzer/"):
