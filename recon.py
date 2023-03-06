@@ -346,10 +346,31 @@ def nuclei_f(directory, domains):
     ## Extract interresting findings
     with open(dir_path + "/nuclei_all_findings.txt", "r") as f_read:
         with open(dir_path + "/nuclei_important_findings.txt", "w") as f_write:
-            to_remove = "[dns]"
+            ### Variable initialization
+            to_write    = {"critical": [], "high": [], "medium": [], "low": [], "other": []}
+            to_remove_1 = "[dns]"
+            to_remove_2 = "[info]"
+            critical    = "[critical]" 
+            high        = "[high]"
+            medium      = "[medium]"
+            low         = "[low]"
+
             for line in f_read.readlines():
-                if (to_remove not in line):
-                    f_write.write(line)
+                l = line.rstrip()
+                if ((to_remove_1 not in l) and (to_remove_2 not in l)):
+                    if (l != "]"):
+                        if (critical in l):
+                            to_write["critical"].append(l)
+                        elif (high in l):
+                            to_write["high"].append(l)
+                        elif (medium in l):
+                            to_write["medium"].append(l)
+                        elif (low in l):
+                            to_write["low"].append(l)
+                        else:
+                            to_write["other"].append(l)
+                            
+            f_write.write(json.dumps(to_write, indent=4))
 
     ## Remove temporary file
     bashCommand = "rm -rf " + dir_path + "/domain_list.txt.tmp"
