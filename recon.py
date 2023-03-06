@@ -888,27 +888,25 @@ def extended_tests(directory, domains, params):
 
     ## Setup Multithreading
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        with alive_progress.alive_bar(counter, ctrl_c=True, title=f'Extended tests progress') as bar:
-            for domain in domains:
-                ## Print to console
-                cprint("Starting extended tests for " + domain, 'blue')
+        for domain in domains:
+            ## Print to console
+            cprint("Starting extended tests for " + domain, 'blue')
 
-                if technologies_per_domain[domain]["ssh"]:
-                    for port in technologies_per_domain[domain]["ssh"]:
-                        ssh_f(directory, domain, port)
-                if technologies_per_domain[domain]["ftp"]:
-                    for port in technologies_per_domain[domain]["ftp"]:
-                        ftp_f(directory, domain, port)
-                if technologies_per_domain[domain]["http"]:
-                    for port in technologies_per_domain[domain]["http"]:
-                        http_f(directory, domain, port)
-                if technologies_per_domain[domain]["https"]:
-                    for port in technologies_per_domain[domain]["https"]:
-                        https_f(directory, domain, port)
-                if technologies_per_domain[domain]["telnet"]:
-                    for port in technologies_per_domain[domain]["telnet"]:
-                        telnet_f(directory, domain, port)
-                bar()
+            if technologies_per_domain[domain]["ssh"]:
+                for port in technologies_per_domain[domain]["ssh"]:
+                    ssh_f(directory, domain, port)
+            if technologies_per_domain[domain]["ftp"]:
+                for port in technologies_per_domain[domain]["ftp"]:
+                    ftp_f(directory, domain, port)
+            if technologies_per_domain[domain]["http"]:
+                for port in technologies_per_domain[domain]["http"]:
+                    http_f(directory, domain, port)
+            if technologies_per_domain[domain]["https"]:
+                for port in technologies_per_domain[domain]["https"]:
+                    https_f(directory, domain, port)
+            if technologies_per_domain[domain]["telnet"]:
+                for port in technologies_per_domain[domain]["telnet"]:
+                    telnet_f(directory, domain, port)
 
 
 
@@ -950,23 +948,19 @@ def recon(directory, hosts, params):
         
     ## Setup Multithreading
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        counter = len(domains)
-        with alive_progress.alive_bar(counter, ctrl_c=True, title=f'nmap scan') as n_bar:
-            future_nmap = {executor.submit(nmap_f, directory, domain): domain for domain in domains}
-            with alive_progress.alive_bar(counter, ctrl_c=True, title=f'DNS scan') as d_bar:
-                future_dns  = {executor.submit(dns_f, directory, domain): domain for domain in domains}
-                with alive_progress.alive_bar(counter, ctrl_c=True, title=f'SSL scan') as s_bar:
-                    future_ssl  = {executor.submit(ssl_f, directory, domain): domain for domain in domains}
+        future_nmap = {executor.submit(nmap_f, directory, domain): domain for domain in domains}
+        future_dns  = {executor.submit(dns_f, directory, domain): domain for domain in domains}        
+        future_ssl  = {executor.submit(ssl_f, directory, domain): domain for domain in domains}
 
-                    for future in concurrent.futures.as_completed(future_dns):
-                        #cprint("Thread completed", 'blue')
-                        d_bar()
-                    for future in concurrent.futures.as_completed(future_ssl):
-                        #cprint("Thread completed", 'blue')
-                        s_bar()
-                    for future in concurrent.futures.as_completed(future_nmap):
-                        #cprint("Thread completed", 'blue')
-                        n_bar()
+        for future in concurrent.futures.as_completed(future_dns):
+            #cprint("Thread completed", 'blue')
+            None
+        for future in concurrent.futures.as_completed(future_ssl):
+            #cprint("Thread completed", 'blue')
+            None
+        for future in concurrent.futures.as_completed(future_nmap):
+            #cprint("Thread completed", 'blue')
+            None
 
     ## Launch extended tests if -e is specified
     if (params["do_extended"]):
