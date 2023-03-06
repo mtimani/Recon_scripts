@@ -1,8 +1,7 @@
 #!/bin/zsh
 
 sudo apt-get update && sudo apt-get install subfinder jq nuclei gccgo-go whois eyewitness -y
-pip3 install aiodnsbrute
-pip3 install cidrize
+pip3 install aiodnsbrute cidrize alive-progress
 pip2 install hsecscan
 sudo mv recon.py /usr/bin/
 sudo chmod +x /usr/bin/recon.py
