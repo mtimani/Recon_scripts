@@ -1,6 +1,12 @@
 #!/bin/zsh
 
 sudo apt-get update && sudo apt-get install subfinder jq nuclei gccgo-go whois eyewitness -y
+
+command -v "whois" >/dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+        sudo apt-get install whois
+        exit 1
+    fi
 pip3 install aiodnsbrute cidrize alive-progress
 pip2 install hsecscan
 sudo mv recon.py /usr/bin/
