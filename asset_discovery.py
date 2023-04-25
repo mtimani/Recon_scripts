@@ -435,7 +435,7 @@ def webanalyzer_worker(directory, domain):
     ### Analyze
     try:
         if web_port:
-            os.system(webanalyze_path + " -host " + domain + " -output json -silent -search false -redirect | jq > " + directory + "/Webanalyzer/" + domain + ".json 2>/dev/null")
+            os.system(webanalyze_path + " -host " + domain + " -output json -silent -search false -redirect 2>/dev/null | jq > " + directory + "/Webanalyzer/" + domain + ".json 2>/dev/null")
     except:
         cprint("\tError running Webanalyzer for " + domain + "\n", 'red')
 
