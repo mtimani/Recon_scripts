@@ -168,7 +168,7 @@ def domains_discovery(directory, hosts):
     found_domains = first_domain_scan(directory, hosts)
 
     ## Remove wildcard domains
-    cprint("Running wildcard DNS cleaning function\n", 'red')
+    cprint("\nRunning wildcard DNS cleaning function\n", 'red')
     cleaned_domains = dns_resolver(found_domains)
 
     ## httpx - project discovery
@@ -198,7 +198,7 @@ def domains_discovery(directory, hosts):
         os.remove(directory + "/found_domains.txt.tmp")
 
     ## SANextract
-    cprint("Running SANextract\n", 'red')
+    cprint("\nRunning SANextract\n", 'red')
 
     temp = []
     for i in urls:
@@ -267,7 +267,7 @@ def IP_discovery(directory, found_domains):
 #-------------Whois Function------------#
 def whois(directory,ip_list,ip_dict):
     ## Print to console
-    cprint("Whois magic\n",'red')
+    cprint("\nWhois magic\n",'red')
 
     ## Create Whois directory
     try:
