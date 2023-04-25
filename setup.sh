@@ -44,3 +44,8 @@ cd /opt/httpmethods
 sudo python3 setup.py install
 rm -rf LICENSE README.md
 go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+unzip findomain-linux.zip
+chmod +x findomain
+sudo mv findomain /usr/bin/findomain
+rm -rf findomain-linux.zip
