@@ -29,6 +29,7 @@ webanalyze_path                 = "/usr/bin/webanalyze"
 gau_path                        = "/usr/bin/gau"
 gowitness_path                  = "/usr/bin/gowitness"
 eyewitness_path                 = "/usr/bin/eyewitness"
+findomain_path                  = "/usr/bin/findomain"
 
 
 
@@ -114,6 +115,14 @@ def worker_f(directory, root_domain, found_domains):
     output, error = process.communicate()
     for i in output.decode('ascii').splitlines():
         found_domains.append(i)
+        
+    ## Findomain
+    bashCommand = findomain_path + " -q -t " + root_domain
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    for i in output.decode('ascii').splitlines():
+        if i != "":
+            found_domains.append(i)
     
     ## Aiodnsbrute
     bashCommand = "aiodnsbrute -w " + dns_bruteforce_wordlist_path + " -t 1024 " + root_domain
