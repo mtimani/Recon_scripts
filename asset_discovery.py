@@ -9,10 +9,12 @@ import os.path
 import subprocess
 import socket
 import threading
+import tldextract
 import json
 import alive_progress
 import concurrent.futures
 import ipaddress
+import operator
 from cidrize import cidrize
 
 
@@ -35,6 +37,7 @@ findomain_path                  = "/usr/bin/findomain"
 
 #-----------Global variables------------#
 to_remove                       = []
+WAFS                            = {"assets_number":0, "results":{}}
 
 
 
@@ -106,19 +109,16 @@ def dns_resolver(hostnames):
 
 #---------Multithreading Function---------#
 def worker_f(directory, root_domain, found_domains):
-    ## Print to console
-    cprint("Finding subdomains for: " + root_domain,'blue')
-    
     ## Subfinder
     bashCommand = "subfinder -silent -d " + root_domain
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     for i in output.decode('ascii').splitlines():
         found_domains.append(i)
         
     ## Findomain
     bashCommand = findomain_path + " -q -t " + root_domain
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     for i in output.decode('ascii').splitlines():
         if i != "":
@@ -126,7 +126,7 @@ def worker_f(directory, root_domain, found_domains):
     
     ## Aiodnsbrute
     bashCommand = "aiodnsbrute -w " + dns_bruteforce_wordlist_path + " -t 1024 " + root_domain
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     ### Found subdomains extraction
     out = output.decode('ascii').splitlines()
@@ -144,16 +144,17 @@ def first_domain_scan(directory, hosts):
     found_domains = hosts.copy()
 
     ## Print to console
-    cprint("Finding subdomains for specified root domains:\n", 'red')
+    cprint("\n\n\nFinding subdomains for specified root domains:\n", 'red')
 
     counter = len(root_domains)
 
     ## Loop over root domains
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-        future_f = {executor.submit(worker_f, directory, root_domain, found_domains): root_domain for root_domain in root_domains}
-        
-        for future in concurrent.futures.as_completed(future_f):
-            None
+    with alive_progress.alive_bar(counter, ctrl_c=True, title=f'Subdomain search and bruteforce (Can take time)') as bar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+            future_f = {executor.submit(worker_f, directory, root_domain, found_domains): root_domain for root_domain in root_domains}
+            
+            for future in concurrent.futures.as_completed(future_f):
+                bar()
     
     ## Sort - Uniq Found domains list
     found_domains = sorted(set(found_domains))
@@ -168,7 +169,7 @@ def domains_discovery(directory, hosts):
     found_domains = first_domain_scan(directory, hosts)
 
     ## Remove wildcard domains
-    cprint("\nRunning wildcard DNS cleaning function\n", 'red')
+    cprint("\n\n\nRunning wildcard DNS cleaning function\n", 'red')
     cleaned_domains = dns_resolver(found_domains)
 
     ## httpx - project discovery
@@ -179,7 +180,7 @@ def domains_discovery(directory, hosts):
             fp.write("%s\n" % item)
 
     bashCommand = "httpx -l " + directory + "/found_domains.txt.tmp -t 150 -rl 3000 -p http:80,https:443,http:8080,https:8443,http:8000,http:3000,http:5000,http:10000 -timeout 3 -probe"
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     out = output.decode('ascii').splitlines()
     
@@ -198,13 +199,13 @@ def domains_discovery(directory, hosts):
         os.remove(directory + "/found_domains.txt.tmp")
 
     ## SANextract
-    cprint("\nRunning SANextract\n", 'red')
+    cprint("Running SANextract\n", 'red')
 
     temp = []
     for i in urls:
         bashCommand_1 = "echo " + i
         bashCommand_2 = SANextract_path + " -timeout 1s"
-        p1 = subprocess.Popen(bashCommand_1.split(), stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(bashCommand_1.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(bashCommand_2.split(), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for j in p2.stdout.read().decode('ascii').splitlines():
             if j[0] != '*':
@@ -228,7 +229,7 @@ def domains_discovery(directory, hosts):
 #---------IP Discovery Function---------#
 def IP_discovery(directory, found_domains):
     ## Print to console
-    cprint("\n\nFinding IPs for found subdomains\n\n",'red')
+    cprint("\n\nFinding IPs for found subdomains:\n",'red')
 
     ## Variables initialization
     ip_dict = {}
@@ -267,7 +268,7 @@ def IP_discovery(directory, found_domains):
 #-------------Whois Function------------#
 def whois(directory,ip_list,ip_dict):
     ## Print to console
-    cprint("\nWhois magic\n",'red')
+    cprint("\n\n\nWhois magic\n",'red')
 
     ## Create Whois directory
     try:
@@ -289,7 +290,7 @@ def whois(directory,ip_list,ip_dict):
             bar()
             try:
                 bashCommand = "whois " + ip
-                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+                process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 output, error = process.communicate()
                 whois_list.append(output.decode('ascii'))
             except:
@@ -301,6 +302,7 @@ def whois(directory,ip_list,ip_dict):
     ## Find correct name for whois file and write to file
     value_1 = "inetnum:"
     value_2 = "CIDR:"
+    cnt     = 0
     for whois_element in whois_list:
         ### Variable initialization
         filename = ""
@@ -317,6 +319,7 @@ def whois(directory,ip_list,ip_dict):
         try:
             cidr = str(cidrize(filename, strict=True)[0])
             filename = cidr.replace("/","_").strip() + ".txt"
+            cnt += 1
         except:
             cprint("Cidrize failed for: " + filename + "\n", "red")
             continue
@@ -335,7 +338,18 @@ def whois(directory,ip_list,ip_dict):
                 ip_owner = line.split(":")[1].strip()
                 break
         
-        whois_dict[cidr] = ip_owner
+        if (cidr not in whois_dict):
+            percentage  = round(1 / counter * 100,2)
+            l = {'Owner': ip_owner, 'Counter': 1, 'Percentage': percentage}
+            whois_dict[cidr] = l
+        else:
+            whois_dict[cidr]['Counter'] += 1
+            percentage = round(whois_dict[cidr]['Counter'] / counter * 100,2)
+            whois_dict[cidr]['Percentage'] = percentage
+
+    for cidr in whois_dict:
+        percentage = round(whois_dict[cidr]['Counter'] / cnt * 100, 2)
+        whois_dict[cidr]['Percentage'] = percentage
 
     ## Append IP Network Owner
     for dict1_key in ip_dict.keys():
@@ -351,29 +365,122 @@ def whois(directory,ip_list,ip_dict):
     ## Write whois dictionnary to file
     with open(directory+"/IP_ranges_and_owners.txt","w") as fp:
         fp.write("{:<40} | {:<40}\n".format('IP Range', 'Owner'))
-        for ip_range, owner in whois_dict.items():
-            fp.write("{:<40} | {:<40}\n".format(ip_range, owner))
+        for ip_range, l in whois_dict.items():
+            owner = l["Owner"]
+            percentage = str(l["Percentage"]) + " %"
+            fp.write("{:<40} | {:<60} | {:<40}\n".format(ip_range, owner, percentage))
+
+    ## Subdomain distribution stats
+    ### Variable initialization
+    subdomain_stats = {}
+
+    ### Recover root domains
+    for key in ip_dict.keys():
+        root_domain = tldextract.extract(key).registered_domain
+        if root_domain in subdomain_stats:
+            subdomain_stats[root_domain] += 1
+        else:
+            subdomain_stats[root_domain] = 1
+
+    sorted_subdomain_stats = dict( sorted(subdomain_stats.items(), key=operator.itemgetter(1),reverse=True))
+    with open(directory + "/subdomain_distribution.csv","w") as fp:
+        for key in sorted_subdomain_stats.keys():
+            line = key + "," + str(subdomain_stats[key]) + "\n"
+            fp.write(line)
+
+
+
+#------Determine WAF worker Function-----#
+def determine_waf_worker(url):
+    ## Variable declaration
+    global WAFS
+
+    ## Wafw00f scan launch
+    try:
+        bashCommand = "wafw00f " + url
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+
+        ### Bash color removal 
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        response = ansi_escape.sub('', output.decode('ascii'))
+
+        ## Result extraction
+        if ("is behind" in response):
+            waf = re.findall(r'is behind (.*) WAF', response)[0]
+        elif ("seems to be behind a WAF or some sort of security solution" in response):
+            waf = "No WAF"
+        elif ("No WAF detected by the generic detection" in response):
+            waf = "No WAF"
+
+        ### Append Data to WAFS dictionnary
+        WAFS["assets_number"] += 1
+        if (waf not in WAFS["results"]):
+            WAFS["results"][waf] = {"counter":1, "urls":[url]}
+        else:
+            WAFS["results"][waf]["counter"] += 1
+            WAFS["results"][waf]["urls"].append(url)
+    
+    except:
+        if ("Failed" not in WAFS["results"]):
+            WAFS["results"]["Failed"] = {"counter":1, "urls":[url]}
+        else:
+            WAFS["results"]["Failed"]["counter"] += 1
+            WAFS["results"]["Failed"]["urls"].append(url)
+
+    
+
+#---------Determine WAF Function---------#
+def determine_waf(directory):
+    ## Print to console
+    cprint("\n\n\nFinding WAFs located in front of the found web assets with wafw00f:\n", 'red')
+
+    ## Constants declarations
+    urls = []
+
+    ## Open httpx_results file and injest data
+    ### Check if httpx_results.txt file exists
+    if not os.path.exists(directory + "/httpx_results.txt"):
+        cprint("\nFailed finding WAFs located in front of the found web assets with wafw00f!\n", 'red')
+        cprint("\nThe file: " + directory + "/httpx_results.txt" + " cannot be found!\n", 'red')
+    else:
+        with open(directory + "/httpx_results.txt", "r") as fp:
+            urls = fp.read().splitlines()
+
+        counter = len(urls)
+
+        ## Loop through urls & multithread
+        with alive_progress.alive_bar(counter, ctrl_c=True, title=f'wafw00f progress') as bar:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                future_f = {executor.submit(determine_waf_worker, url): url for url in urls}
+                
+                for future in concurrent.futures.as_completed(future_f):
+                    bar()
+
+        ## Output result to file
+        with open(directory + "/waf_results.json","w") as fp:
+            fp.write(json.dumps(WAFS, sort_keys=True, indent=4))
 
 
 
 #---------Nuclei Function Launch--------#
 def nuclei_f(directory):
     ## Print to console
-    cprint("\nNuclei scan launched!\n",'red')
+    cprint("\n\n\nNuclei scan launched!\n",'red')
 
     ## Create Nuclei output directory
     dir_path = directory + "/Nuclei"
     try:
         os.mkdir(dir_path)
-        cprint("Creation of " + dir_path + " directory", 'blue')
+        cprint("Creation of " + dir_path + "/ directory", 'blue')
     except FileExistsError:
-        cprint("Directory " + dir_path + " already exists", 'blue')
+        cprint("Directory " + dir_path + "/ already exists", 'blue')
     except:
         raise
     
     ## Nuclei scan launch
     bashCommand = "nuclei -l " + directory + "/domain_list.txt -o " + dir_path + "/nuclei_all_findings.txt"
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
 
     ## Extract interresting findings
@@ -410,7 +517,7 @@ def nuclei_f(directory):
 #---------Screenshot Function Launch--------#
 def screenshot_f(directory):
     ## Print to console
-    cprint("\nScreenshots of found web assets with EyeWitness launched!\n",'red')
+    cprint("\n\n\nScreenshots of found web assets with EyeWitness launched!\n",'red')
     
     ## EyeWitness tool launch
     os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots -f " + directory + "/domain_list.txt")
@@ -444,14 +551,14 @@ def webanalyzer_worker(directory, domain):
 #-------Webanalyzer Function Launch------#
 def webanalyzer_f(directory, found_domains):
     ## Print to console
-    cprint("\nFinding used technologies by the found web assets with Webanalyzer!\n", 'red')
+    cprint("\n\n\nFinding used technologies by the found web assets with Webanalyzer:", 'red')
 
     ## Create output directories
     try:
         os.mkdir(directory + "/Webanalyzer")
-        cprint("Creation of " + directory + "/Webanalyzer directory", 'blue')
+        cprint("Creation of " + directory + "/Webanalyzer/ directory", 'blue')
     except FileExistsError:
-        cprint("Directory " + directory + "/Webanalyzer already exists", 'blue')
+        cprint("Directory " + directory + "/Webanalyzer/ already exists", 'blue')
     except:
         raise
 
@@ -512,7 +619,7 @@ def webanalyzer_f(directory, found_domains):
 #--------------Gau Function-------------#
 def gau_f(directory):
     ## Print to console
-    cprint("\nFinding interresting URLs based on found web assets\n", 'red')
+    cprint("\n\n\nFinding interresting URLs based on found web assets\n", 'red')
 
     ## Launch Gau Tool
     try:
@@ -583,6 +690,9 @@ def main(args):
 
     ## Whois function call
     whois(directory, ip_list, ip_dict)
+
+    ## Run WAF related tests
+    determine_waf(directory)
 
     ## Webanalyzer function call
     if (do_webanalyzer):
