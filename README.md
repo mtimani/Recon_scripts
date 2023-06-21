@@ -74,3 +74,27 @@ mutually exclusive arguments:
   -l HOST_LIST [HOST_LIST ...], --list HOST_LIST [HOST_LIST ...]
                         List of root domains to scan
 ```
+
+
+## Root_domains_extractor.py script
+
+### Description
+This is a helper script that allows to extract newly found root domains by the asset_discovery.py script.
+
+The script needs a root_domain file and a domains_and_IP_list.json file wich is obtained by executing the asset_discovery.py script.
+
+### Usage
+```
+usage: root_domains_extractor.py [-h] -d DIRECTORY -r ROOT_DOMAINS -l DOMAIN_AND_IP_LIST
+
+options:
+  -h, --help            show this help message and exit
+
+required arguments:
+  -d DIRECTORY, --directory DIRECTORY
+                        Directory that will store results
+  -r ROOT_DOMAINS, --root_domains ROOT_DOMAINS
+                        Filename containing root domains
+  -l DOMAIN_AND_IP_LIST, --list DOMAIN_AND_IP_LIST
+                        domains_and_IP_list.json file from asset_discovery.py scan
+```
