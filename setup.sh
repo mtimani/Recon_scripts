@@ -7,7 +7,7 @@ command -v "whois" >/dev/null 2>&1
         sudo apt-get install whois
         exit 1
     fi
-pip3 install aiodnsbrute cidrize alive-progress
+pip3 install aiodnsbrute cidrize alive-progress wafw00f
 pip2 install hsecscan
 sudo mv recon.py /usr/bin/
 sudo chmod +x /usr/bin/recon.py
