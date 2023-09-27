@@ -28,10 +28,8 @@ go build
 cd /opt/
 wget -c "https://github.com/sensepost/gowitness/releases/download/2.4.2/gowitness-2.4.2-linux-amd64" && mv gowitness* gowitness && chmod +x gowitness && sudo mv gowitness /usr/bin
 wget -c "https://github.com/rverton/webanalyze/releases/download/v0.3.8/webanalyze_0.3.8_Linux_x86_64.tar.gz"
-tar -xzvf webanalyze_0.3.8_Linux_x86_64.tar.gz
-./webanalyze -update
-rm -rf webanalyze_0.3.8_Linux_x86_64.tar.gz technologies.json
-sudo mv webanalyze /usr/bin
+go install -v github.com/rverton/webanalyze/cmd/webanalyze@lates
+webanalyze -update
 wget -c "https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz"
 tar -xzvf gau_2.1.2_linux_amd64.tar.gz
 rm -rf gau_2.1.2_linux_amd64.tar.gz
