@@ -651,7 +651,7 @@ def http_f(directory, domain, port):
         dir_create_check(working_dir + "/Gau", True)
 
         ### Analyze
-        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx,urlscan --threads 100")
+        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx -t 100")
 
     except:
         cprint("\tError running Gau for " + domain + " port " + port, 'red')
