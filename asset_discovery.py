@@ -623,7 +623,7 @@ def gau_f(directory):
 
     ## Launch Gau Tool
     try:
-        os.system("cat " + directory + "/domain_list.txt | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx,urlscan -t 100")
+        os.system("cat " + directory + "/domain_list.txt | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx -t 100")
     except:
         cprint("\t Error running gau tool on found web assets\n", 'red')
 
