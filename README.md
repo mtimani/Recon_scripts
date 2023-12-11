@@ -7,6 +7,7 @@ The following command must be executed in order to install the recon.py and asse
 ```
 ./setup.sh
 ```
+> :warning: **Please check the global variables in each script before launching it!**: Be very careful here!
 
 ## Recon.py script
 
