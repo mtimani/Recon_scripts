@@ -49,12 +49,12 @@ command -v "git" >/dev/null 2>&1
 ## Install go
 command -v "go" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        if [ "$OS" = "Kali" ] || [ "$OS" = "Debian" ] || [ "$OS" = "Exegol" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Exegol" ]; then
             apt-get install gccgo-go -y
             if [ "$OS" = "Kali" ]; then
                 export PATH=$PATH:/root/go/bin
             fi
-        elif [ "$OS" = "Ubuntu" ]; then
+        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
             wget https://dl.google.com/go/go1.21.3.linux-amd64.tar.gz
             tar -xvf go1.21.3.linux-amd64.tar.gz
             mv go /usr/local
@@ -127,6 +127,7 @@ command -v "eyewitness" >/dev/null 2>&1
             current_dir=$(pwd)
             cd EyeWitness/Python/setup
             chmod +x setup.sh
+            sed -i -e "s/python3 -m pip install/python3 -m pip install --break-system-packages/g" setup.sh
             ./setup.sh
             cd $current_dir
             rm -rf EyeWitness
