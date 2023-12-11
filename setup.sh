@@ -55,7 +55,13 @@ command -v "go" >/dev/null 2>&1
                 export PATH=$PATH:/root/go/bin
             fi
         elif [ "$OS" = "Ubuntu" ]; then
-            apt-get install golang-go  -y
+            wget https://dl.google.com/go/go1.21.3.linux-amd64.tar.gz
+            tar -xvf go1.21.3.linux-amd64.tar.gz
+            mv go /usr/local
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+            rm -rf go1.21.3.linux-amd64.tar.gz
         fi
     fi
 
@@ -80,10 +86,17 @@ command -v "wget" >/dev/null 2>&1
 ## Install pip2
 command -v "pip2" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        wget https://gist.githubusercontent.com/anir0y/a20246e26dcb2ebf1b44a0e1d989f5d1/raw/a9908e5dd147f0b6eb71ec51f9845fafe7fb8a7f/pip2%2520install -O run.sh 
-        chmod +x run.sh
-        ./run.sh
-        rm -rf run.sh
+        if [ "$OS" = "Ubuntu" ]; then
+            apt-get install python2 -y
+            wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+            python2 get-pip.py
+            rm -rf get-pip.py
+        else
+            wget https://gist.githubusercontent.com/anir0y/a20246e26dcb2ebf1b44a0e1d989f5d1/raw/a9908e5dd147f0b6eb71ec51f9845fafe7fb8a7f/pip2%2520install -O run.sh 
+            chmod +x run.sh
+            ./run.sh
+            rm -rf run.sh
+        fi
     fi
 
 ## Install nuclei
@@ -91,6 +104,11 @@ command -v "nuclei" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install nuclei -y
+        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+            export GO111MODULE="on"
+            go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+            nuclei -update
+            nuclei -ut
         else
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
@@ -104,7 +122,7 @@ command -v "eyewitness" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install eyewitness -y
-        elif [ "$OS" = "Debian" ]; then
+        elif [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Exegol" ]; then
             git clone https://github.com/RedSiege/EyeWitness.git
             current_dir=$(pwd)
             cd EyeWitness/Python/setup
@@ -120,6 +138,9 @@ command -v "subfinder" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install subfinder -y
+        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+            export GO111MODULE="on"
+            go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
         else
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
@@ -132,7 +153,7 @@ command -v "SANextract" >/dev/null 2>&1
         git clone https://github.com/hvs-consulting/SANextract
         current_dir=$(pwd)
         cd SANextract
-        if [ "$OS" = "Kali" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
             export GO111MODULE="on"
             go mod init SANextract
             go build
@@ -159,7 +180,7 @@ command -v "gowitness" >/dev/null 2>&1
 ## Install webanalyze
 command -v "webanalyze" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        if [ "$OS" = "Kali" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
             export GO111MODULE="on"
             go install -v github.com/rverton/webanalyze/cmd/webanalyze@latest
             mv /root/go/bin/webanalyze /usr/bin/
@@ -175,6 +196,9 @@ command -v "gau" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install getallurls -y
+        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ];then
+            export GO111MODULE="on"
+            go install github.com/lc/gau/v2/cmd/gau@latest
         else
             go env -w GO111MODULE=off
             go install github.com/lc/gau/v2/cmd/gau@latest
@@ -188,7 +212,7 @@ command -v "httpmethods" >/dev/null 2>&1
         current_dir=$(pwd)
         chown -R $(echo "$USER"):$(echo "$USER") httpmethods
         cd httpmethods
-        if [ "$OS" = "Kali" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
             rm -rf assets/ wordlists/
         fi
         python3 setup.py install
@@ -199,7 +223,7 @@ command -v "httpmethods" >/dev/null 2>&1
 ## Install httpx
 command -v "httpx" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        if [ "$OS" = "Kali" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
         else
