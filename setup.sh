@@ -121,14 +121,15 @@ command -v "nuclei" >/dev/null 2>&1
             export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+            mv /root/go/bin/nuclei /usr/bin/
             nuclei -update
             nuclei -ut
-            mv /root/go/bin/nuclei /usr/bin/
         elif [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-            nuclei -update
-            nuclei -ut
+            mv /root/go/bin/nuclei /usr/bin/
+            /usr/bin/nuclei -update
+            /usr/bin/nuclei -ut
         else
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
@@ -142,7 +143,7 @@ command -v "eyewitness" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install eyewitness -y
-        elif [ "$OS" = "Debian" ]; then
+        elif [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ]; then
             apt-get install python3-pip -y
             current_dir=$(pwd)
             cd /opt/
@@ -157,15 +158,6 @@ command -v "eyewitness" >/dev/null 2>&1
             cd $current_dir
             alias eyewitness='/opt/EyeWitness/Python/EyeWitness.py'
             chmod -R 777 /opt/EyeWitness/Python
-        elif [ "$OS" = "Ubuntu" ]; then
-            git clone https://github.com/RedSiege/EyeWitness.git
-            current_dir=$(pwd)
-            cd EyeWitness/Python/setup
-            chmod +x setup.sh
-            sed -i -e "s/python3 -m pip install/python3 -m pip install --break-system-packages/g" setup.sh
-            ./setup.sh
-            cd $current_dir
-            rm -rf EyeWitness
         fi
     fi
 
@@ -184,6 +176,7 @@ command -v "subfinder" >/dev/null 2>&1
         elif [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+            mv /root/go/bin/subfinder /usr/bin/
         else
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
@@ -256,6 +249,13 @@ command -v "gau" >/dev/null 2>&1
         elif [ "$OS" = "Ubuntu" ];then
             export GO111MODULE="on"
             go install github.com/lc/gau/v2/cmd/gau@latest
+            mv /root/go/bin/gau /usr/bin/
+            echo "[[wayback_machines]]" > .gau.toml
+            echo 'url = "https://web.archive.org/save/%s"' >> .gau.toml
+            for d in /home/*/ ; do
+                cp .gau.toml $d/
+            done
+            mv .gau.toml /root/
         elif [ "$OS" = "Debian" ]; then
             export GOROOT=/usr/local/go
             export GOPATH=$HOME/go
@@ -296,6 +296,7 @@ command -v "httpx" >/dev/null 2>&1
         if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+            mv /root/go/bin/httpx /usr/bin/
         elif [ "$OS" = "Debian" ]; then
             export GOROOT=/usr/local/go
             export GOPATH=$HOME/go
