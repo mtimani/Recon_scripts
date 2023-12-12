@@ -54,6 +54,8 @@ Small script that allows to do DNS asset discovery, Nuclei scans, take screensho
 The script needs a root_domain to bruteforce and an output_directory as arguments.
 Ex: `asset_discovery.py -d $(pwd) -l target.com -n -s`
 
+> :warning: **In Kali Linux, do not run as root! Screenshots won't work**
+
 ### Usage
 ```
 usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
