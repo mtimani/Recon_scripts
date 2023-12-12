@@ -91,11 +91,22 @@ command -v "pip2" >/dev/null 2>&1
             wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
             python2 get-pip.py
             rm -rf get-pip.py
+            pip2 install hsecscan
+        elif [ "$OS" = "Debian" ]; then
+            echo "deb http://archive.debian.org/debian/ stretch main" | sudo tee -a /etc/apt/sources.list
+            echo "deb-src http://archive.debian.org/debian/ stretch main" | sudo tee -a /etc/apt/sources.list
+            apt update
+            apt install -y python2.7 
+            apt update
+            apt install -y python-pip
+            pip2 install hsecscan
+            sed -i '/archive.debian.org\/debian\/ stretch main/d' /etc/apt/sources.list
         else
             wget https://gist.githubusercontent.com/anir0y/a20246e26dcb2ebf1b44a0e1d989f5d1/raw/a9908e5dd147f0b6eb71ec51f9845fafe7fb8a7f/pip2%2520install -O run.sh 
             chmod +x run.sh
             ./run.sh
             rm -rf run.sh
+            pip2 install hsecscan
         fi
     fi
 
@@ -104,7 +115,16 @@ command -v "nuclei" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install nuclei -y
-        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+        elif [ "$OS" = "Debian" ]; then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+            export GO111MODULE="on"
+            go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+            nuclei -update
+            nuclei -ut
+            mv /root/go/bin/nuclei /usr/bin/
+        elif [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
             nuclei -update
@@ -122,7 +142,22 @@ command -v "eyewitness" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install eyewitness -y
-        elif [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Exegol" ]; then
+        elif [ "$OS" = "Debian" ]; then
+            apt-get install python3-pip -y
+            current_dir=$(pwd)
+            cd /opt/
+            apt-get install -y git python3-pip xvfb libssl-dev libffi-dev libxml2 libxml2-dev libxslt1-dev zlib1g-dev wkhtmltopdf
+            pip3 install --upgrade setuptools --break-system-packages
+            git clone https://github.com/FortyNorthSecurity/EyeWitness.git
+            cd EyeWitness/Python/setup
+            sed -i -e "s/python3 -m pip install/python3 -m pip install --break-system-packages/g" setup.sh
+            bash setup.sh
+            cd ..
+            sed -i -e "s@\#\!/usr/bin/env python3@\#\!$(which python3)@" EyeWitness.py
+            cd $current_dir
+            alias eyewitness='/opt/EyeWitness/Python/EyeWitness.py'
+            chmod -R 777 /opt/EyeWitness/Python
+        elif [ "$OS" = "Ubuntu" ]; then
             git clone https://github.com/RedSiege/EyeWitness.git
             current_dir=$(pwd)
             cd EyeWitness/Python/setup
@@ -139,7 +174,14 @@ command -v "subfinder" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install subfinder -y
-        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+        elif [ "$OS" = "Debian" ]; then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+            export GO111MODULE="on"
+            go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+            mv /root/go/bin/subfinder /usr/bin/
+        elif [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
         else
@@ -154,7 +196,14 @@ command -v "SANextract" >/dev/null 2>&1
         git clone https://github.com/hvs-consulting/SANextract
         current_dir=$(pwd)
         cd SANextract
-        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ]; then
+            export GO111MODULE="on"
+            go mod init SANextract
+            go build
+        elif [ "$OS" = "Debian" ];then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
             export GO111MODULE="on"
             go mod init SANextract
             go build
@@ -181,7 +230,14 @@ command -v "gowitness" >/dev/null 2>&1
 ## Install webanalyze
 command -v "webanalyze" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ]; then
+            export GO111MODULE="on"
+            go install -v github.com/rverton/webanalyze/cmd/webanalyze@latest
+            mv /root/go/bin/webanalyze /usr/bin/
+        elif [ "$OS" = "Debian" ]; then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
             export GO111MODULE="on"
             go install -v github.com/rverton/webanalyze/cmd/webanalyze@latest
             mv /root/go/bin/webanalyze /usr/bin/
@@ -197,9 +253,22 @@ command -v "gau" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         if [ "$OS" = "Kali" ]; then
             apt-get install getallurls -y
-        elif [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ];then
+        elif [ "$OS" = "Ubuntu" ];then
             export GO111MODULE="on"
             go install github.com/lc/gau/v2/cmd/gau@latest
+        elif [ "$OS" = "Debian" ]; then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+            export GO111MODULE="on"
+            go install github.com/lc/gau/v2/cmd/gau@latest
+            mv /root/go/bin/gau /usr/bin/
+            echo "[[wayback_machines]]" > .gau.toml
+            echo 'url = "https://web.archive.org/save/%s"' >> .gau.toml
+            for d in /home/*/ ; do
+                cp .gau.toml $d/
+            done
+            mv .gau.toml /root/
         else
             go env -w GO111MODULE=off
             go install github.com/lc/gau/v2/cmd/gau@latest
@@ -224,9 +293,16 @@ command -v "httpmethods" >/dev/null 2>&1
 ## Install httpx
 command -v "httpx" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ]; then
             export GO111MODULE="on"
             go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+        elif [ "$OS" = "Debian" ]; then
+            export GOROOT=/usr/local/go
+            export GOPATH=$HOME/go
+            export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+            export GO111MODULE="on"
+            go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+            mv /root/go/bin/httpx /usr/bin/
         else
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
@@ -245,7 +321,6 @@ command -v "findomain" >/dev/null 2>&1
 
 # Install required packages via pip2 and pip3
 pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
-pip2 install hsecscan
 
 # Download ssh-audit
 if [ ! -d ' /opt/ssh-audit' ]; then
@@ -316,13 +391,28 @@ sed -i -e "s@$old_location@$gowitness_location@" asset_discovery.py
 old_location="/usr/bin/findomain"
 sed -i -e "s@$old_location@$findomain_location@" asset_discovery.py
 old_location="/usr/bin/eyewitness"
-if [[ $eyewitness_location == *"aliased to"* ]]; then
-    eyewitness_location=$(which eyewitness | awk '{print $5}')
+if [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Exegol" ]; then
+    eyewitness_location="/opt/EyeWitness/Python/EyeWitness.py"
     sed -i -e "s@$old_location@$eyewitness_location@" asset_discovery.py
+    if [ "$OS" = "Exegol" ]; then
+        apt-get install python3-pip -y
+        current_dir=$(pwd)
+        cd /opt/
+        apt-get install -y git python3-pip xvfb libssl-dev libffi-dev libxml2 libxml2-dev libxslt1-dev zlib1g-dev wkhtmltopdf
+        pip3 install --upgrade setuptools --break-system-packages
+        git clone https://github.com/FortyNorthSecurity/EyeWitness.git
+        cd EyeWitness/Python/setup
+        sed -i -e "s/python3 -m pip install/python3 -m pip install --break-system-packages/g" setup.sh
+        ./setup.sh
+        cd ..
+        sed -i -e "s@\#\!/usr/bin/env python3@\#\!$(which python3)@" EyeWitness.py
+        cd $current_dir
+        alias eyewitness='/opt/EyeWitness/Python/EyeWitness.py'
+        chmod -R 777 /opt/EyeWitness/Python
+    fi
 else
     sed -i -e "s@$old_location@$eyewitness_location@" asset_discovery.py
 fi
-
 
 # Move scripts to /usr/bin/
 cd $initial_dir
@@ -338,7 +428,3 @@ chown $(echo "$USER"):$(echo "$USER") /usr/bin/root_domains_extractor.py
 mv whois_stats.py /usr/bin/
 chmod +x /usr/bin/whois_stats.py
 chown $(echo "$USER"):$(echo "$USER") /usr/bin/whois_stats.py
-
-if [ "$OS" = "Kali" ]; then
-    echo "\n${RED}Warning! Add the following directory to your PATH variable: /root/go/bin${NC}\n"
-fi
