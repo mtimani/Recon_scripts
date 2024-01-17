@@ -39,7 +39,7 @@ usage: recon.py [-h] [-e] [-n] [-s] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LI
 
 options:
   -h, --help            show this help message and exit
-  -e, --extended        Run extended tests (includes SSH, FTP and HTTP tests)
+  -e, --extended        Run extended tests (includes SSH, FTP, SSL and HTTP tests)
   -n, --nuclei          Use Nuclei scanner to scan assets
   -s, --screenshot      Use Gowitness to take screenshots of web assets
 
@@ -217,34 +217,51 @@ def dns_f(directory, domain):
 
 
 #-----------DNS Recon Function----------#
-def ssl_f(directory, domain):
-    ## Directory creation
-    dir_create_check(directory + "/03.SSL/" + domain, True)
+def ssl_f(directory, domain, port):
+    ## Counter
+    index = check_dir_index(directory, "SSL")
+    if index == 0:
+        counter = dir_counter(directory)
+    else:
+        counter = index
+
+    ## Create directories
+    ### Create SSL subdirectory
+    dir_create_check(directory + "/0" + str(counter) + ".SSL/", False)
+
+    ### Create domain subdirectory
+    dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain, True)
+
+    ### Create port subdirectory
+    dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port, True)
+
+    ### Working dir parameter
+    working_dir = directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port
 
     ## Print to console
-    cprint("SSL recon of " + domain + "\n",'red')
+    cprint("SSL recon of " + domain + " on port " + port + "\n",'red')
 
     ## SSLScan
-    bashCommand = "sslscan " + domain
+    bashCommand = "sslscan " + domain + ":" + port
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
     ### Write output of sslscan command to file
-    with open(directory + "/03.SSL/" + domain + "/sslscan.txt","w") as fp:
+    with open(filename_path + domain + "/sslscan.txt","w") as fp:
         fp.write(output.decode('ascii'))
     
     ## TestSSL
-    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 " + domain
+    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 " + domain + ":" + port
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
     ### Write output of sslscan command to file
-    with open(directory + "/03.SSL/" + domain + "/testssl.txt","w") as fp:
+    with open(filename_path + domain + "/testssl.txt","w") as fp:
         fp.write(output.decode('ascii'))
 
     ## TestSSL json
-    output_file = directory + "/03.SSL/" + domain + "/testssl.json"
-    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain
+    output_file = filename_path + domain + "/testssl.json"
+    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain + ":" + port
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
@@ -924,6 +941,7 @@ def extended_tests(directory, domains, params):
                     http_f(directory, domain, port)
             if technologies_per_domain[domain]["https"]:
                 for port in technologies_per_domain[domain]["https"]:
+                    ssl_f(directory, domain, port)
                     https_f(directory, domain, port)
             if technologies_per_domain[domain]["telnet"]:
                 for port in technologies_per_domain[domain]["telnet"]:
@@ -965,18 +983,13 @@ def recon(directory, hosts, params):
         ## Directory creation
         dir_create_check(directory + "/01.Nmap", False)
         dir_create_check(directory + "/02.DNS", False)
-        dir_create_check(directory + "/03.SSL", False)
         
     ## Setup Multithreading
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         future_nmap = {executor.submit(nmap_f, directory, domain): domain for domain in domains}
-        future_dns  = {executor.submit(dns_f, directory, domain): domain for domain in domains}        
-        future_ssl  = {executor.submit(ssl_f, directory, domain): domain for domain in domains}
+        future_dns  = {executor.submit(dns_f, directory, domain): domain for domain in domains}
 
         for future in concurrent.futures.as_completed(future_dns):
-            #cprint("Thread completed", 'blue')
-            None
-        for future in concurrent.futures.as_completed(future_ssl):
             #cprint("Thread completed", 'blue')
             None
         for future in concurrent.futures.as_completed(future_nmap):
@@ -1007,7 +1020,7 @@ def parse_command_line():
     content     = exclusive.add_mutually_exclusive_group(required=True)
 
     ## Arguments
-    parser.add_argument("-e", "--extended", dest='e', action='store_true', help="Run extended tests (includes SSH, FTP and HTTP tests)")
+    parser.add_argument("-e", "--extended", dest='e', action='store_true', help="Run extended tests (includes SSH, FTP, SSL and HTTP tests)")
     parser.add_argument("-n", "--nuclei", dest='n', action='store_true', help="Use Nuclei scanner to scan assets")
     parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use Gowitness to take screenshots of web assets")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
