@@ -226,9 +226,12 @@ def dir_counter(directory):
 
     ## Analyze subdirectories
     for dir in dir_list:
-        counter = int(dir.split("0")[1].split(".")[0])
-        if (counter > max_counter):
-            max_counter = counter
+        try:
+            counter = int(dir.split("0")[1].split(".")[0])
+            if (counter > max_counter):
+                max_counter = counter
+        except:
+            None
 
     max_counter += 1
 
@@ -236,7 +239,7 @@ def dir_counter(directory):
 
 
 
-#---------Check if HTTP dir exists----------#
+#---------Check if directory exists----------#
 def check_dir_index(directory, name):
     ## Counter of directories
     index = 0
