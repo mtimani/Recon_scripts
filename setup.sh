@@ -354,7 +354,11 @@ fi
 ## Variable init
 cd $initial_dir
 httpmethods_location=$(which httpmethods)
-webanalyze_location=$(which webanalyze)
+if [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Kali" ]; then
+    webanalyze_location=$(which webanalyze)
+else
+    webanalyze_location="$(go env GOPATH)/bin/webanalyze"
+fi
 if [ "$OS" = "Kali" ]; then
     gau_location=$(which getallurls)
 else
