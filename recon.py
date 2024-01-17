@@ -255,52 +255,56 @@ def check_dir_index(directory, name):
 
 #-----------SSL Audit Function----------#
 def ssl_f(directory, domain, port):
-    ## Counter
-    index = check_dir_index(directory, "SSL")
-    if index == 0:
-        counter = dir_counter(directory)
-    else:
-        counter = index
+    try:
+        ## Counter
+        index = check_dir_index(directory, "SSL")
+        if index == 0:
+            counter = dir_counter(directory)
+        else:
+            counter = index
 
-    ## Create directories
-    ### Create SSL subdirectory
-    dir_create_check(directory + "/0" + str(counter) + ".SSL/", False)
+        ## Create directories
+        ### Create SSL subdirectory
+        dir_create_check(directory + "/0" + str(counter) + ".SSL/", False)
 
-    ### Create domain subdirectory
-    dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain, True)
+        ### Create domain subdirectory
+        dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain, True)
 
-    ### Create port subdirectory
-    dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port, True)
+        ### Create port subdirectory
+        dir_create_check(directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port, True)
 
-    ### Working dir parameter
-    working_dir = directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port
+        ### Working dir parameter
+        working_dir = directory + "/0" + str(counter) + ".SSL/" + domain + "/port_" + port
 
-    ## Print to console
-    cprint("SSL recon of " + domain + " on port " + port + "\n",'red')
+        ## Print to console
+        cprint("SSL recon of " + domain + " on port " + port + "\n",'red')
 
-    ## SSLScan
-    bashCommand = "sslscan " + domain + ":" + port
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+        ## SSLScan
+        bashCommand = "sslscan " + domain + ":" + port
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
 
-    ### Write output of sslscan command to file
-    with open(working_dir + "/sslscan.txt","w") as fp:
-        fp.write(output.decode('ascii'))
-    
-    ## TestSSL
-    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 " + domain + ":" + port
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+        ### Write output of sslscan command to file
+        with open(working_dir + "/sslscan.txt","w") as fp:
+            fp.write(output.decode('ascii'))
+        
+        ## TestSSL
+        bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 " + domain + ":" + port
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
 
-    ### Write output of sslscan command to file
-    with open(working_dir + "/testssl.txt","w") as fp:
-        fp.write(output.decode('ascii'))
+        ### Write output of sslscan command to file
+        with open(working_dir + "/testssl.txt","w") as fp:
+            fp.write(output.decode('ascii'))
 
-    ## TestSSL json
-    output_file = working_dir + "/testssl.json"
-    bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain + ":" + port
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+        ## TestSSL json
+        output_file = working_dir + "/testssl.json"
+        bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain + ":" + port
+        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+    except Exception as error:
+        # handle the exception
+        print("An exception occurred:", error)
 
 
 
@@ -421,18 +425,20 @@ def determine_technologies(directory, domain):
                 ftp_ports.append(line.split("/tcp")[0])
             elif line.endswith("ftp"):
                 ftp_ports.append(line.split("/tcp")[0])
-            elif "http " in line:
-                http_ports.append(line.split("/tcp")[0])
-            elif line.endswith("http"):
-                http_ports.append(line.split("/tcp")[0])
-            elif "http?" in line:
-                http_ports.append(line.split("/tcp")[0])
+            elif "ssl/http" in line:
+                https_ports.append(line.split("/tcp")[0])
             elif "https " in line:
                 https_ports.append(line.split("/tcp")[0])
             elif "https?" in line:
                 https_ports.append(line.split("/tcp")[0])
             elif line.endswith("https"):
                 https_ports.append(line.split("/tcp")[0])
+            elif "http " in line:
+                http_ports.append(line.split("/tcp")[0])
+            elif line.endswith("http"):
+                http_ports.append(line.split("/tcp")[0])
+            elif "http?" in line:
+                http_ports.append(line.split("/tcp")[0])
             elif "telnet " in line:
                 telnet_ports.append(line.split("/tcp")[0])
             elif line.endswith("telnet"):
@@ -717,7 +723,7 @@ def http_f(directory, domain, port):
 
 #------------HTTP Function Launch-----------#
 def https_f(directory, domain, port):
-    ## SSL Audit function launch
+    ## Launch SSL audit function
     ssl_f(directory, domain, port)
 
     ## Variable initialization
