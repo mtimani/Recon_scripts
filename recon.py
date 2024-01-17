@@ -247,7 +247,7 @@ def ssl_f(directory, domain, port):
     output, error = process.communicate()
 
     ### Write output of sslscan command to file
-    with open(filename_path + domain + "/sslscan.txt","w") as fp:
+    with open(working_dir + "/sslscan.txt","w") as fp:
         fp.write(output.decode('ascii'))
     
     ## TestSSL
@@ -256,11 +256,11 @@ def ssl_f(directory, domain, port):
     output, error = process.communicate()
 
     ### Write output of sslscan command to file
-    with open(filename_path + domain + "/testssl.txt","w") as fp:
+    with open(working_dir + "/testssl.txt","w") as fp:
         fp.write(output.decode('ascii'))
 
     ## TestSSL json
-    output_file = filename_path + domain + "/testssl.json"
+    output_file = working_dir + "/testssl.json"
     bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain + ":" + port
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
