@@ -24,7 +24,7 @@ from termcolor import colored, cprint
 #---------------Constants---------------#
 testssl_location    = "/opt/testssl.sh/testssl.sh"
 ssh_audit_location  = "/opt/ssh-audit/ssh-audit.py"
-httpmethods         = "/opt/httpmethods/httpmethods.py"
+httpmethods_path    = "/opt/httpmethods/httpmethods.py"
 webanalyze_path     = "/usr/bin/webanalyze"
 gau_path            = "/usr/bin/gau"
 dns_server          = "8.8.8.8"
@@ -629,7 +629,7 @@ def http_f(directory, domain, port):
         
         ### Analyze
         cprint("\n\nThe following are the authorized methods by the https://" + domain + " website\n", 'red')
-        os.system(httpmethods + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
+        os.system(httpmethods_path + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
 
     except:
         cprint("\tError running Http Methods tool for " + domain + " port " + port, 'red')
@@ -657,6 +657,7 @@ def http_f(directory, domain, port):
         dir_create_check(working_dir + "/Webanalyzer", True)
 
         ### Analyze
+        os.system(webanalyze_path + " -update")
         os.system(webanalyze_path + " -host http://" + domain + ":" + port + "/ -output json -silent -search false -redirect | jq > " + working_dir + "/Webanalyzer/webanalyzer_out.json 2>/dev/null")
 
     except:
@@ -716,6 +717,9 @@ def http_f(directory, domain, port):
 
 #------------HTTP Function Launch-----------#
 def https_f(directory, domain, port):
+    ## SSL Audit function launch
+    ssl_f(directory, domain, port)
+
     ## Variable initialization
     index = check_dir_index(directory, "HTTP")
     if index == 0:
@@ -772,7 +776,7 @@ def https_f(directory, domain, port):
         ### Analyze
         ### Analyze
         cprint("\n\nThe following are the authorized methods by the https://" + domain + " website\n", 'red')
-        os.system(httpmethods + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
+        os.system(httpmethods_path + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
 
     except:
         cprint("\tError running Http Methods tool for " + domain + " port " + port, 'red')
@@ -798,8 +802,8 @@ def https_f(directory, domain, port):
     try:
         ### Create Webanalyzer subdirectory
         dir_create_check(working_dir + "/Webanalyzer", True)
-
         ### Analyze
+        os.system(webanalyze_path + " -update")
         os.system(webanalyze_path + " -host https://" + domain + ":" + port + "/ -output json -silent -search false -redirect | jq > " + working_dir + "/Webanalyzer/webanalyzer_out.json 2>/dev/null")
 
     except:
@@ -811,7 +815,7 @@ def https_f(directory, domain, port):
         dir_create_check(working_dir + "/Gau", True)
 
         ### Analyze
-        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx,urlscan --threads 100")
+        os.system("echo " + domain + " | " + gau_path + " --o " + working_dir + "/Gau/gau_" + domain + ".txt --providers wayback,commoncrawl,otx")
 
     except:
         cprint("\tError running Gau for " + domain + " port " + port, 'red')
@@ -941,7 +945,6 @@ def extended_tests(directory, domains, params):
                     http_f(directory, domain, port)
             if technologies_per_domain[domain]["https"]:
                 for port in technologies_per_domain[domain]["https"]:
-                    ssl_f(directory, domain, port)
                     https_f(directory, domain, port)
             if technologies_per_domain[domain]["telnet"]:
                 for port in technologies_per_domain[domain]["telnet"]:
