@@ -45,7 +45,7 @@ WAFS                            = {"assets_number":0, "results":{}}
 def usage():
     print(
 '''
-usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] [-i] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
 
 options:
   -h, --help            show this help message and exit
@@ -53,6 +53,7 @@ options:
   -s, --screenshot      Use EyeWitness to take screenshots of found web assets
   -w, --webanalyzer     Use Webanalyzer to list used web technologies
   -g, --gau             Use gau tool to find interresting URLs on found web assets
+  -i, --wafwoof         Use wafw00f to determine the WAF technology protecting the found web assets
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
@@ -208,8 +209,9 @@ def domains_discovery(directory, hosts):
         p1 = subprocess.Popen(bashCommand_1.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(bashCommand_2.split(), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         for j in p2.stdout.read().decode('ascii').splitlines():
-            if j[0] != '*':
-                temp.append(j)
+            if len(j) != 0:
+                if j[0] != '*':
+                    temp.append(j)
 
     ## Remove wildcard domains (again)
     cprint("Running wildcard DNS cleaning function\n", 'red')
@@ -642,6 +644,7 @@ def parse_command_line():
     parser.add_argument("-s", "--screenshot", dest='s', action='store_true', help="Use EyeWitness to take screenshots of found web assets")
     parser.add_argument("-w", "--webanalyzer", dest='w', action='store_true', help="Use Webanalyzer to list used web technologies")
     parser.add_argument("-g", "--gau", dest='g', action='store_true', help="Use gau tool to find interresting URLs on found web assets")
+    parser.add_argument("-i", "--wafwoof", dest='i', action='store_true', help="Use wafw00f to determine the WAF technology protecting the found web assets")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
     content.add_argument("-f", "--filename", dest="host_list_file", help="Filename containing root domains to scan")
     content.add_argument("-l", "--list", dest="host_list", nargs='+', help="List of root domains to scan")
@@ -659,6 +662,7 @@ def main(args):
     do_screenshots  = args.s
     do_webanalyzer  = args.w
     do_gau          = args.g
+    do_wafwoof      = args.i
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
@@ -692,7 +696,8 @@ def main(args):
     whois(directory, ip_list, ip_dict)
 
     ## Run WAF related tests
-    determine_waf(directory)
+    if (do_wafwoof):
+        determine_waf(directory)
 
     ## Webanalyzer function call
     if (do_webanalyzer):
