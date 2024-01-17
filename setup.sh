@@ -361,10 +361,15 @@ fi
 
 ## Actual replacement
 old_location="/opt/httpmethods/httpmethods.py"
-if [[ $httpmethods_location == *"aliased to"* ]]; then
-    httpmethods_location=$(which httpmethods | awk '{print $5}')
+if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
+    if [[ $httpmethods_location == *"aliased to"* ]]; then
+        httpmethods_location=$(which httpmethods | awk '{print $5}')
+    fi
+    sed -i -e "s@$old_location@$httpmethods_location@" recon.py
+else
+    httpmethods_location=$(which httpmethods.py | awk -F " " '{ print $4, $5 }')
+    sed -i -e "s@$old_location@$httpmethods_location@" recon.py
 fi
-sed -i -e "s@$old_location@$httpmethods_location@" recon.py
 old_location="/usr/bin/webanalyze"
 sed -i -e "s@$old_location@$webanalyze_location@" recon.py
 old_location="/usr/bin/gau"
