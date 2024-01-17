@@ -216,7 +216,44 @@ def dns_f(directory, domain):
 
 
 
-#-----------DNS Recon Function----------#
+#-Return Directory Counter Function Launch--#
+def dir_counter(directory):
+    ## Counter of directories
+    max_counter = 0
+
+    ## List of subdirectories in directory
+    dir_list = next(os.walk(directory))[1]
+
+    ## Analyze subdirectories
+    for dir in dir_list:
+        counter = int(dir.split("0")[1].split(".")[0])
+        if (counter > max_counter):
+            max_counter = counter
+
+    max_counter += 1
+
+    return max_counter
+
+
+
+#---------Check if HTTP dir exists----------#
+def check_dir_index(directory, name):
+    ## Counter of directories
+    index = 0
+
+    ## List of subdirectories in directory
+    dir_list = next(os.walk(directory))[1]
+
+    ## Analyze subdirectories
+    for direct in dir_list:
+        if name in direct:
+            index = int(direct.split("0")[1].split(".")[0])
+
+    return index
+
+
+
+#-----------SSL Audit Function----------#
 def ssl_f(directory, domain, port):
     ## Counter
     index = check_dir_index(directory, "SSL")
@@ -264,43 +301,6 @@ def ssl_f(directory, domain, port):
     bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 --jsonfile " + output_file + " " + domain + ":" + port
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
-
-
-
-#-Return Directory Counter Function Launch--#
-def dir_counter(directory):
-    ## Counter of directories
-    max_counter = 0
-
-    ## List of subdirectories in directory
-    dir_list = next(os.walk(directory))[1]
-
-    ## Analyze subdirectories
-    for dir in dir_list:
-        counter = int(dir.split("0")[1].split(".")[0])
-        if (counter > max_counter):
-            max_counter = counter
-
-    max_counter += 1
-
-    return max_counter
-
-
-
-#---------Check if HTTP dir exists----------#
-def check_dir_index(directory, name):
-    ## Counter of directories
-    index = 0
-
-    ## List of subdirectories in directory
-    dir_list = next(os.walk(directory))[1]
-
-    ## Analyze subdirectories
-    for direct in dir_list:
-        if name in direct:
-            index = int(direct.split("0")[1].split(".")[0])
-
-    return index
 
 
 
