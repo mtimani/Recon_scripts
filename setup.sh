@@ -282,12 +282,14 @@ command -v "httpmethods" >/dev/null 2>&1
         current_dir=$(pwd)
         chown -R $(echo "$USER"):$(echo "$USER") httpmethods
         cd httpmethods
-        if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
-            rm -rf assets/ wordlists/
-        fi
+        rm -rf assets/ wordlists/
         python3 setup.py install
         cd $current_dir
         rm -rf httpmethods
+        if [ "$OS" = "Exegol" ]; then
+            export PATH=$PATH:/root/.pyenv/versions/3.11.7/bin
+            echo "PATH=$PATH:/root/.pyenv/versions/3.11.7/bin" >> ~$(echo "$USER")/.zshrc
+        fi
     fi
 
 ## Install httpx
@@ -310,7 +312,7 @@ command -v "httpx" >/dev/null 2>&1
         fi
     fi
 
-## Install httpx
+## Install findomain
 command -v "findomain" >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
         curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
@@ -361,15 +363,10 @@ fi
 
 ## Actual replacement
 old_location="/opt/httpmethods/httpmethods.py"
-if [ "$OS" = "Kali" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Debian" ]; then
-    if [[ $httpmethods_location == *"aliased to"* ]]; then
-        httpmethods_location=$(which httpmethods | awk '{print $5}')
-    fi
-    sed -i -e "s@$old_location@$httpmethods_location@" recon.py
-else
-    httpmethods_location=$(which httpmethods.py | awk -F " " '{ print $4, $5 }')
-    sed -i -e "s@$old_location@$httpmethods_location@" recon.py
+if [[ $httpmethods_location == *"aliased to"* ]]; then
+    httpmethods_location=$(which httpmethods | awk '{print $5}')
 fi
+sed -i -e "s@$old_location@$httpmethods_location@" recon.py
 old_location="/usr/bin/webanalyze"
 sed -i -e "s@$old_location@$webanalyze_location@" recon.py
 old_location="/usr/bin/gau"
@@ -378,8 +375,12 @@ sed -i -e "s@$old_location@$gau_location@" recon.py
 # Replace global variables in asset_discovery.py
 ## Variable init
 cd $initial_dir
-sanextract_location=$(which SANextract)
-webanalyze_location=$(which webanalyze)
+sanextract_location=$(which SANextract)y
+if [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Kali" ]; then
+    webanalyze_location=$(which webanalyze)
+else
+    webanalyze_location="$(go env GOPATH)/bin/webanalyze"
+fi
 if [ "$OS" = "Kali" ]; then
     gau_location=$(which getallurls)
 else
@@ -438,3 +439,7 @@ chown $(echo "$USER"):$(echo "$USER") /usr/bin/root_domains_extractor.py
 mv whois_stats.py /usr/bin/
 chmod +x /usr/bin/whois_stats.py
 chown $(echo "$USER"):$(echo "$USER") /usr/bin/whois_stats.py
+
+if [ "$OS" = "Exegol" ]; then
+    exec zsh
+fi
