@@ -379,7 +379,7 @@ sed -i -e "s@$old_location@$gau_location@" recon.py
 # Replace global variables in asset_discovery.py
 ## Variable init
 cd $initial_dir
-sanextract_location=$(which SANextract)y
+sanextract_location=$(which SANextract)
 if [ "$OS" = "Debian" ] || [ "$OS" = "Ubuntu" ] || [ "$OS" = "Kali" ]; then
     webanalyze_location=$(which webanalyze)
 else
