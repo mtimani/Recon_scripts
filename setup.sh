@@ -181,6 +181,11 @@ command -v "subfinder" >/dev/null 2>&1
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
         fi
+    else
+        if [ "$OS" = "Exegol" ]; then
+            subfinder -up
+            katana -up
+        fi
     fi
 
 ## Install SANextract
@@ -273,6 +278,10 @@ command -v "gau" >/dev/null 2>&1
             go env -w GO111MODULE=off
             go install github.com/lc/gau/v2/cmd/gau@latest
         fi
+    else
+        if [ "$OS" = "Exegol" ]; then
+            go install github.com/lc/gau/v2/cmd/gau@latest
+        fi
     fi
 
 ## Install httpmethods
@@ -310,7 +319,12 @@ command -v "httpx" >/dev/null 2>&1
             go env -w GO111MODULE=off
             go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
         fi
+    else
+        if [ "$OS" = "Exegol" ]; then
+            httpx -up
+        fi
     fi
+
 
 ## Install findomain
 command -v "findomain" >/dev/null 2>&1
