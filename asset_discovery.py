@@ -45,7 +45,7 @@ WAFS                            = {"assets_number":0, "results":{}}
 def usage():
     print(
 '''
-usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] [-i] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] [-i] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...] | -b SUBDOMAIN_LIST_FILE)
 
 options:
   -h, --help            show this help message and exit
@@ -64,6 +64,8 @@ mutually exclusive arguments:
                         Filename containing root domains to scan
   -l HOST_LIST [HOST_LIST ...], --list HOST_LIST [HOST_LIST ...]
                         List of root domains to scan
+  -b SUBDOMAIN_LIST_FILE, --bypass-domain-discovery SUBDOMAIN_LIST_FILE
+                        Bypass subdomain discovery and pass a subdomain list as an argument
 '''
         )
 
@@ -161,6 +163,30 @@ def first_domain_scan(directory, hosts):
     found_domains = sorted(set(found_domains))
 
     return found_domains.copy()
+
+
+
+#-------------httpx Function--------------#
+def httpx_f(directory, subdomain_list_file):
+    ## Print to console
+    cprint("\n\n\nRunning httpx, a project discovery tool on the provided subdomains\n", 'red')
+
+    ## httpx - project discovery
+    bashCommand = "httpx -l " + subdomain_list_file + " -t 150 -rl 3000 -p http:80,https:443,http:8080,https:8443,http:8000,http:3000,http:5000,http:10000 -timeout 3 -probe"
+    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = process.communicate()
+    out = output.decode('ascii').splitlines()
+
+    urls = []
+
+    for line in out:
+        if ("FAILED" not in line):
+            url = line.split('[')[0].strip()
+            urls.append(url)
+
+    with open(directory + "/httpx_results.txt", "w") as fp:
+        for item in urls:
+            fp.write("%s\n" % item)
 
 
 
@@ -466,7 +492,7 @@ def determine_waf(directory):
 
 
 #---------Nuclei Function Launch--------#
-def nuclei_f(directory):
+def nuclei_f(directory, domain_list_file = "/domain_list.txt"):
     ## Print to console
     cprint("\n\n\nNuclei scan launched!\n",'red')
 
@@ -481,7 +507,12 @@ def nuclei_f(directory):
         raise
     
     ## Nuclei scan launch
-    bashCommand = "nuclei -l " + directory + "/domain_list.txt -o " + dir_path + "/nuclei_all_findings.txt"
+    ### If root domain list is provided
+    if (domain_list_file == "/domain_list.txt"):
+        bashCommand = "nuclei -l " + directory + "/domain_list.txt -o " + dir_path + "/nuclei_all_findings.txt"
+    ### If subdomain list is provided
+    else:
+        bashCommand = "nuclei -l " + domain_list_file + " -o " + dir_path + "/nuclei_all_findings.txt"
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
 
@@ -517,12 +548,17 @@ def nuclei_f(directory):
 
 
 #---------Screenshot Function Launch--------#
-def screenshot_f(directory):
+def screenshot_f(directory, domain_list_file = "/domain_list.txt"):
     ## Print to console
     cprint("\n\n\nScreenshots of found web assets with EyeWitness launched!\n",'red')
     
     ## EyeWitness tool launch
-    os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots -f " + directory + "/domain_list.txt")
+    ### If root domain list is provided
+    if (domain_list_file == "/domain_list.txt"):
+        os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots -f " + directory + "/domain_list.txt")
+    ### If subdomain list is provided
+    else:
+        os.system(eyewitness_path + " --timeout 10 --prepend-https --no-prompt --delay 5 -d " + directory + "/Screenshots -f " + domain_list_file)
 
 
 
@@ -619,13 +655,18 @@ def webanalyzer_f(directory, found_domains):
 
 
 #--------------Gau Function-------------#
-def gau_f(directory):
+def gau_f(directory, domain_list_file = "/domain_list.txt"):
     ## Print to console
     cprint("\n\n\nFinding interresting URLs based on found web assets\n", 'red')
 
     ## Launch Gau Tool
     try:
-        os.system("cat " + directory + "/domain_list.txt | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx")
+        ### If root domain list is provided
+        if (domain_list_file == "/domain_list.txt"):
+            os.system("cat " + directory + "/domain_list.txt | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx")
+        ### If subdomain list is provided
+        else:
+            os.system("cat " + domain_list_file + " | " + gau_path + " --o " + directory + "/gau_url_findings.txt --providers wayback,commoncrawl,otx")
     except:
         cprint("\t Error running gau tool on found web assets\n", 'red')
 
@@ -633,6 +674,15 @@ def gau_f(directory):
 
 #--------Arguments Parse Function-------#
 def parse_command_line():
+    ## Print header
+    print("""                                       
+ AAAAA   SSSSS  SSSSS  EEEEE  TTTTT       DDDD    III  SSSSS   CCCC   OOO   V   V  EEEEE  RRRR    Y   Y       PPPP    Y   Y
+A     A  S      S      E        T         D   D    I   S      C      O   O  V   V  E      R   R    Y Y        P   P    Y Y
+AAAAAAA  SSSSS  SSSSS  EEEEE    T         D   D    I   SSSSS  C      O   O  V   V  EEEEE  RRRR      Y         PPPP      Y
+A     A      S      S  E        T         D   D    I      S   C      O   O   V V   E      R  R      Y         P         Y
+A     A  SSSSS  SSSSS  EEEEE    T  ====== DDDD    III  SSSSS   CCCC   OOO     V    EEEEE  R   R     Y     O   P         Y
+    """)
+
     ## Arguments groups
     parser      = argparse.ArgumentParser()
     required    = parser.add_argument_group('required arguments')
@@ -648,6 +698,7 @@ def parse_command_line():
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
     content.add_argument("-f", "--filename", dest="host_list_file", help="Filename containing root domains to scan")
     content.add_argument("-l", "--list", dest="host_list", nargs='+', help="List of root domains to scan")
+    content.add_argument("-b", "--bypass-domain-discovery", dest="subdomain_list_file", help="Bypass subdomain discovery and pass a subdomain list as an argument")
     return parser
 
 
@@ -655,14 +706,18 @@ def parse_command_line():
 #-------------Main Function-------------#
 def main(args):
     ## Arguments
-    directory       = args.directory
-    host_list       = args.host_list
-    host_list_file  = args.host_list_file
-    do_nuclei       = args.n
-    do_screenshots  = args.s
-    do_webanalyzer  = args.w
-    do_gau          = args.g
-    do_wafwoof      = args.i
+    directory           = args.directory
+    host_list           = args.host_list
+    host_list_file      = args.host_list_file
+    subdomain_list_file = args.subdomain_list_file
+    do_nuclei           = args.n
+    do_screenshots      = args.s
+    do_webanalyzer      = args.w
+    do_gau              = args.g
+    do_wafwoof          = args.i
+
+    ## Display welcome message
+    cprint("\nThe pizza is cooking, please wait...", "green")
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
@@ -673,24 +728,43 @@ def main(args):
     
     ### Hosts list variable creation
     hosts = []
+    subdomains = []
     
     ### If option -f is specified
-    if (host_list == None):
+    if (host_list_file != None):
         if (not(os.path.exists(host_list_file))):
             cprint("\nError! The specified host list file: %s does not exist!\n" % (host_list_file), 'red')
             exit_abnormal()
         with open(host_list_file) as file:
             for line in file:
                 hosts.append(line.replace("\n", ""))
+    ### If option -b is specified
+    elif (subdomain_list_file != None):
+        if (not(os.path.exists(subdomain_list_file))):
+            cprint("\nError! The specified subdomain list file: %s does not exist!\n" % (subdomain_list_file), 'red')
+            exit_abnormal()
+        with open(subdomain_list_file) as file:
+            for line in file:
+                subdomains.append(line.replace("\n", ""))
     ### If option -l is specified
     else:
         hosts = host_list
-    
-    ## Domains discovery function call
-    found_domains = domains_discovery(directory, hosts)
+
+    ## Domains discovery function call in the case subdomains are not provided and only root domains are provided
+    if (not subdomains):
+        found_domains = domains_discovery(directory, hosts)
+
+    ## Httpx Function call (that runs httpx on the provided subdomains) if subdomain option is selected
+    if (subdomains):
+        httpx_f(directory, subdomain_list_file)
 
     ## IP discovery function call
-    ip_list, ip_dict = IP_discovery(directory, found_domains)
+    ### If root domain list is provided
+    if (not subdomains):
+        ip_list, ip_dict = IP_discovery(directory, found_domains)
+    ### If subdomain list is provided
+    else:
+        ip_list, ip_dict = IP_discovery(directory, subdomains)
 
     ## Whois function call
     whois(directory, ip_list, ip_dict)
@@ -701,21 +775,41 @@ def main(args):
 
     ## Webanalyzer function call
     if (do_webanalyzer):
-        webanalyzer_f(directory, found_domains)
+        ### If root domain list is provided
+        if (not subdomains):
+            webanalyzer_f(directory, found_domains)
+        ### If subdomain list is provided
+        else:
+            webanalyzer_f(directory, subdomains)
 
     ## Gau function call
     if (do_gau):
-        gau_f(directory)
+        ### If root domain list is provided
+        if (not subdomains):
+            gau_f(directory)
+        ### If subdomain list is provided
+        else:
+            gau_f(directory, subdomain_list_file)
 
     ## Take screenshots of found web assets if -s is specified
     if (do_screenshots):
-        screenshot_f(directory)
+        ### If root domain list is provided
+        if (not subdomains):
+            screenshot_f(directory)
+        ### If subdomain list is provided
+        else:
+            screenshot_f(directory, subdomain_list_file)
 
     ## Nuclei scan if -n is specified
     if (do_nuclei):
-        nuclei_f(directory)
+        ### If root domain list is provided
+        if (not subdomains):
+            nuclei_f(directory)
+        ### If subdomain list is provided
+        else:
+            nuclei_f(directory, subdomain_list_file)
 
-    cprint("All tests complete, good hacking to you young padawan!",'green')
+    cprint("\n\nAll tests complete, good hacking to you young padawan!",'green')
 
 
 
