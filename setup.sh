@@ -338,9 +338,9 @@ command -v "findomain" >/dev/null 2>&1
 
 # Install required packages via pip2 and pip3
 if [ "$OS" = "Exegol" ]; then
-  /usr/bin/python3 -m pip install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
+  /usr/bin/python3 -m pip install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor re collections --break-system-packages
 else
-  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
+  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor re collections --break-system-packages
 fi
 
 # Download ssh-audit
