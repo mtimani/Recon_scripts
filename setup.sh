@@ -93,14 +93,22 @@ command -v "pip2" >/dev/null 2>&1
             rm -rf get-pip.py
             pip2 install hsecscan
         elif [ "$OS" = "Debian" ]; then
-            echo "deb http://archive.debian.org/debian/ stretch main" | sudo tee -a /etc/apt/sources.list
-            echo "deb-src http://archive.debian.org/debian/ stretch main" | sudo tee -a /etc/apt/sources.list
-            apt update
-            apt install -y python2.7 
-            apt update
-            apt install -y python-pip
+            sudo apt-get install build-essential libsqlite3-dev zlib1g-dev libncurses5-dev libgdbm-dev libbz2-dev libreadline5-dev libssl-dev libdb-dev
+            wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz
+            tar -xzf Python-2.7.3.tgz
+            cd Python-2.7.3
+            ./configure --prefix=/usr --enable-shared
+            make
+            sudo make install
+            sudo cp python /usr/bin/
+            cd ..
+            wget http://peak.telecommunity.com/dist/ez_setup.py
+            sudo python ez_setup.py
+            sudo easy_install-2.7 virtualenv
+            wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+            python get-pip.py
+            rm -rf get-pip.py Python-2.7.3 Python-2.7.3.tgz
             pip2 install hsecscan
-            sed -i '/archive.debian.org\/debian\/ stretch main/d' /etc/apt/sources.list
         else
             wget https://gist.githubusercontent.com/anir0y/a20246e26dcb2ebf1b44a0e1d989f5d1/raw/a9908e5dd147f0b6eb71ec51f9845fafe7fb8a7f/pip2%2520install -O run.sh 
             chmod +x run.sh
@@ -338,9 +346,9 @@ command -v "findomain" >/dev/null 2>&1
 
 # Install required packages via pip2 and pip3
 if [ "$OS" = "Exegol" ]; then
-  /usr/bin/python3 -m pip install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor re collections --break-system-packages
+  /usr/bin/python3 -m pip install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
 else
-  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor re collections --break-system-packages
+  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
 fi
 
 # Download ssh-audit
