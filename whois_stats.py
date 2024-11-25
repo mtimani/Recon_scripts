@@ -7,6 +7,8 @@ import os
 import os.path
 import subprocess
 import socket
+import collections
+import re
 import json
 import alive_progress
 import ipaddress
@@ -184,6 +186,63 @@ def whois(directory,ip_list,ip_dict):
 
 
 
+#--------Parse percentage function-------#
+def parse_percentage(text):
+    # Extract percentage from text
+    float_value = float(re.search(r'\d+\.\d+', " 1.54 %").group())
+    return float_value
+
+
+
+#----Statistics normalization function---#
+def owner_percentage_normalization_f(directory):
+    owner_percentages_not_sorted = collections.defaultdict(dict)
+    owner_percentages = collections.defaultdict(dict)
+
+    with open(directory + '/IP_ranges_and_owners.txt', 'r') as fp:
+        # Skip the header row
+        next(fp)
+        for line in fp:
+            ip_range, owner, percentage_text = line.strip().split('|')
+            owner_name = owner.strip()
+            percentage = parse_percentage(percentage_text)
+            if owner_name in owner_percentages_not_sorted:
+                owner_percentages_not_sorted[owner_name]["percentage"] += percentage
+                owner_percentages_not_sorted[owner_name]["ip_range"] = owner_percentages_not_sorted[owner_name]["ip_range"] + ", " + ip_range
+            else:    
+                owner_percentages_not_sorted[owner_name] = {"ip_range": ip_range, "percentage": percentage}
+
+    # Sort lines by percentages
+    while owner_percentages_not_sorted:
+        max_owner_name = ""
+        max_ip_range_string = ""
+        max_percentage = 0
+        for owner_name, range_and_percentage in owner_percentages_not_sorted.items():
+            if range_and_percentage["percentage"] > max_percentage:
+                max_owner_name = owner_name
+                max_ip_range_string = range_and_percentage["ip_range"]
+                max_percentage = range_and_percentage["percentage"]
+        owner_percentages[max_owner_name] = {"ip_range": max_ip_range_string, "percentage": max_percentage}
+        owner_percentages_not_sorted.pop(max_owner_name, None)
+
+    # Calculate total percentage
+    total_percentage = 0
+    for owner_name, range_and_percentage in owner_percentages.items():
+        total_percentage += range_and_percentage["percentage"]
+
+    # Write normalized output to file
+    if total_percentage > 0:
+        with open(directory + '/IP_ranges_and_owners.txt', 'w') as fp:
+            fp.write("{:<60} | {:<47} | {:<1}\n".format('Owner', 'Percentage', 'IP Ranges'))
+            for owner_name, range_and_percentage in owner_percentages.items():
+                relative_percentage = round(range_and_percentage["percentage"] / total_percentage * 100, 3)
+                ip_range_string = range_and_percentage["ip_range"]
+                fp.write("{:<60} | {:<6} {:<40} | {:<1}\n".format(owner_name, relative_percentage, "%", re.sub("\s+" , " ", ip_range_string)))
+    else:
+        cprint("No unique owners found.", "red")
+
+
+
 #--------CSV Generation Function--------#
 def csv_generator(directory):
     # Variables initialization
@@ -250,6 +309,9 @@ def main(args):
 
     ## Whois function call
     whois(directory, ip_list, ip_dict)
+
+    ## Statistics normalization function call
+    owner_percentage_normalization_f(directory)
 
     ## CSV generation function call
     csv_generator(directory)
