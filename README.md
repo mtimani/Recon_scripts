@@ -74,7 +74,7 @@ mutually exclusive arguments:
 ### Pull recon_scripts docker image from Docker Hub
 The following command must be executed in order to pull recon_scripts docker image from Docker Hub
 ```
-docker pull mtimani/recon_scripts:v1
+docker pull mtimani/recon_scripts
 ```
 
 ### Build recon_scripts docker container locally
