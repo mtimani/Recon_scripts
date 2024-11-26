@@ -471,3 +471,8 @@ chown $(echo "$USER"):$(echo "$USER") /usr/bin/whois_stats.py
 if [ "$OS" = "Exegol" ]; then
     exec zsh
 fi
+
+# Cleanup temporary files
+sudo apt clean -y && apt autoclean -y
+go clean --cache
+pip cache purge
