@@ -93,22 +93,23 @@ command -v "pip2" >/dev/null 2>&1
             rm -rf get-pip.py
             pip2 install hsecscan
         elif [ "$OS" = "Debian" ]; then
-            sudo apt-get install build-essential libsqlite3-dev zlib1g-dev libncurses5-dev libgdbm-dev libbz2-dev libreadline5-dev libssl-dev libdb-dev
-            wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz
-            tar -xzf Python-2.7.3.tgz
-            cd Python-2.7.3
-            ./configure --prefix=/usr --enable-shared
-            make
-            sudo make install
-            sudo cp python /usr/bin/
-            cd ..
-            wget http://peak.telecommunity.com/dist/ez_setup.py
-            sudo python ez_setup.py
-            sudo easy_install-2.7 virtualenv
+            sudo apt-get install build-essential libsqlite3-dev zlib1g-dev libncurses5-dev libgdbm-dev libbz2-dev libssl-dev libdb-dev -y
+            wget -c http://ftp.debian.org/debian/pool/main/libf/libffi/libffi7_3.3-6_amd64.deb
+            wget -c http://ftp.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1w-0+deb11u1_amd64.deb
+            wget -c http://ftp.debian.org/debian/pool/main/p/python2.7/libpython2.7-minimal_2.7.18-8+deb11u1_amd64.deb
+            wget -c http://ftp.debian.org/debian/pool/main/p/python2.7/python2.7-minimal_2.7.18-8+deb11u1_amd64.deb
+            wget -c http://ftp.debian.org/debian/pool/main/p/python2.7/libpython2.7-stdlib_2.7.18-8+deb11u1_amd64.deb
+            wget -c http://ftp.debian.org/debian/pool/main/p/python2.7/python2.7_2.7.18-8+deb11u1_amd64.deb
+            wget -c https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo dpkg -i libffi7_3.3-6_amd64.deb libssl1.1_1.1.1w-0+deb11u1_amd64.deb libpython2.7-minimal_2.7.18-8+deb11u1_amd64.deb python2.7-minimal_2.7.18-8+deb11u1_amd64.deb libpython2.7-stdlib_2.7.18-8+deb11u1_amd64.deb python2.7_2.7.18-8+deb11u1_amd64.deb google-chrome-stable_current_amd64.deb
+            sudo apt-get -fy install
+            rm -rf *.deb
             wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
-            python get-pip.py
-            rm -rf get-pip.py Python-2.7.3 Python-2.7.3.tgz
+            python2.7 get-pip.py
+            rm -rf *.deb get-pip.py
             pip2 install hsecscan
+            sudo apt --fix-broken install -y
+            sudo apt-get install python3 python3-pip -y
         else
             wget https://gist.githubusercontent.com/anir0y/a20246e26dcb2ebf1b44a0e1d989f5d1/raw/a9908e5dd147f0b6eb71ec51f9845fafe7fb8a7f/pip2%2520install -O run.sh 
             chmod +x run.sh
@@ -302,7 +303,6 @@ command -v "httpmethods" >/dev/null 2>&1
         rm -rf assets/ wordlists/
         python3 setup.py install
         cd $current_dir
-        rm -rf httpmethods
         if [ "$OS" = "Exegol" ]; then
             export PATH=$PATH:/root/.pyenv/versions/3.11.7/bin
             echo "PATH=$PATH:/root/.pyenv/versions/3.11.7/bin" >> ~$(echo "$USER")/.zshrc
@@ -348,7 +348,7 @@ command -v "findomain" >/dev/null 2>&1
 if [ "$OS" = "Exegol" ]; then
   /usr/bin/python3 -m pip install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
 else
-  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor --break-system-packages
+  pip3 install aiodnsbrute cidrize alive-progress wafw00f tldextract termcolor dnsrecon "urllib3<2" --break-system-packages
 fi
 
 # Download ssh-audit
@@ -373,6 +373,16 @@ if [ ! -d ' /opt/testssl.sh' ]; then
     git clone https://github.com/drwetter/testssl.sh.git
     chown -R $(echo "$USER"):$(echo "$USER") /opt/testssl.sh
 fi
+
+# Install MSF
+command -v "msfconsole" >/dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+        sudo apt install gpgv2 autoconf bison build-essential postgresql libaprutil1 libgmp3-dev libpcap-dev openssl libpq-dev libreadline6-dev libsqlite3-dev libssl-dev locate libsvn1 libtool libxml2 libxml2-dev libxslt-dev wget libyaml-dev ncurses-dev  postgresql-contrib xsel zlib1g zlib1g-dev curl -y
+        curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall
+        chmod 755 msfinstall
+        ./msfinstall
+        rm -rf msfinstall
+    fi
 
 # Replace global variables in recon.py
 ## Variable init
