@@ -461,12 +461,6 @@ chown $(echo "$USER"):$(echo "$USER") /usr/bin/recon.py
 mv asset_discovery.py /usr/bin/
 chmod +x /usr/bin/asset_discovery.py
 chown $(echo "$USER"):$(echo "$USER") /usr/bin/asset_discovery.py
-mv root_domains_extractor.py /usr/bin/
-chmod +x /usr/bin/root_domains_extractor.py
-chown $(echo "$USER"):$(echo "$USER") /usr/bin/root_domains_extractor.py
-mv whois_stats.py /usr/bin/
-chmod +x /usr/bin/whois_stats.py
-chown $(echo "$USER"):$(echo "$USER") /usr/bin/whois_stats.py
 
 if [ "$OS" = "Exegol" ]; then
     exec zsh
