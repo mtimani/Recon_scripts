@@ -2,12 +2,37 @@
 
 Recon scripts for Red Team and Web blackbox auditing.
 
-## Installation
-The following command must be executed in order to install the recon.py and asset_discovery.py scripts
+## Asset_discovery.py script
+
+### Description
+Small script that allows to perform DNS asset discovery, Nuclei scans, determine used technologies, find known URLs, take screenshots of found web assets by combining the output of several tools.
+
+The script needs a root_domain to bruteforce and an output_directory as arguments.
+Ex: `asset_discovery.py -d $(pwd) -l target.com -n -s`
+
+> :warning: **In Kali Linux, do not run as root! Screenshots won't work**
+
+### Usage
 ```
-./setup.sh
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
+
+options:
+  -h, --help            show this help message and exit
+  -n, --nuclei          Use Nuclei scanner to scan found assets
+  -s, --screenshot      Use EyeWitness to take screenshots of found web assets
+  -w, --webanalyzer     Use Webanalyzer to list used web technologies
+  -g, --gau             Use gau tool to find interresting URLs on found web assets
+
+required arguments:
+  -d DIRECTORY, --directory DIRECTORY
+                        Directory that will store results
+
+mutually exclusive arguments:
+  -f HOST_LIST_FILE, --filename HOST_LIST_FILE
+                        Filename containing root domains to scan
+  -l HOST_LIST [HOST_LIST ...], --list HOST_LIST [HOST_LIST ...]
+                        List of root domains to scan
 ```
-> :warning: **Please check the global variables in each script before launching it! Be very careful here!**
 
 ## Recon.py script
 
@@ -44,79 +69,25 @@ mutually exclusive arguments:
                         List of domains to scan
 ```
 
+## Installation 
 
-
-## Asset_discovery.py script
-
-### Description
-Small script that allows to do DNS asset discovery, Nuclei scans, take screenshots of found web assets by combining the output of several tools.
-
-The script needs a root_domain to bruteforce and an output_directory as arguments.
-Ex: `asset_discovery.py -d $(pwd) -l target.com -n -s`
-
-> :warning: **In Kali Linux, do not run as root! Screenshots won't work**
-
-### Usage
+### Pull recon_scripts docker image from Docker Hub
+The following command must be executed in order to pull recon_scripts docker image from Docker Hub
 ```
-usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...])
-
-options:
-  -h, --help            show this help message and exit
-  -n, --nuclei          Use Nuclei scanner to scan found assets
-  -s, --screenshot      Use EyeWitness to take screenshots of found web assets
-  -w, --webanalyzer     Use Webanalyzer to list used web technologies
-  -g, --gau             Use gau tool to find interresting URLs on found web assets
-
-required arguments:
-  -d DIRECTORY, --directory DIRECTORY
-                        Directory that will store results
-
-mutually exclusive arguments:
-  -f HOST_LIST_FILE, --filename HOST_LIST_FILE
-                        Filename containing root domains to scan
-  -l HOST_LIST [HOST_LIST ...], --list HOST_LIST [HOST_LIST ...]
-                        List of root domains to scan
+docker pull mtimani/recon_scripts:v1
 ```
 
-## Root_domains_extractor.py script
+### Build recon_scripts docker container locally
 
-### Description
-This is a helper script that allows to extract newly found root domains by the `asset_discovery.py` script.
-
-The script needs a root_domain file and a `domains_and_IP_list.json` file wich is obtained by executing the `asset_discovery.py` script.
-
-### Usage
+The following command must be executed in order to build the recon_scripts docker image locally
 ```
-usage: root_domains_extractor.py [-h] -d DIRECTORY -r ROOT_DOMAINS -l DOMAIN_AND_IP_LIST
-
-options:
-  -h, --help            show this help message and exit
-
-required arguments:
-  -d DIRECTORY, --directory DIRECTORY
-                        Directory that will store results
-  -r ROOT_DOMAINS, --root_domains ROOT_DOMAINS
-                        Filename containing root domains
-  -l DOMAIN_AND_IP_LIST, --list DOMAIN_AND_IP_LIST
-                        domains_and_IP_list.json file from asset_discovery.py scan
+docker build -t recon_scripts .
 ```
 
-## WHOIS statistics
+### Local installation without docker (Not recommended)
 
-### Description
-This is a helper script that allows to create a csv file containing whois statistics.
-The script needs a HOST_LIST_FILE containing all the subdomains found by the `asset_discovery.py` script.
-
-### Usage
+The following command must be executed in order to install the recon.py and asset_discovery.py scripts locally without docker
 ```
-usage: whois_stats.py [-h] -d DIRECTORY -f HOST_LIST_FILE
-
-options:
-  -h, --help            show this help message and exit
-
-required arguments:
-  -d DIRECTORY, --directory DIRECTORY
-                        Directory that will store results
-  -f HOST_LIST_FILE, --filename HOST_LIST_FILE
-                        Filename containing root domains to scan
+sudo ./setup.sh
 ```
+> :warning: **Please check the global variables in each script before launching it! Be very careful here!**
