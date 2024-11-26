@@ -8,7 +8,7 @@ RUN echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
 RUN apt-get update && apt-get upgrade -y
 
-RUN apt-get install -y locales zsh lsb-release wget curl tar git sed sudo
+RUN apt-get install -y locales zsh lsb-release wget curl tar git sed sudo zip nmap iputils-ping dnsutils bsdmainutils
 RUN locale-gen en_US.UTF-8
 
 RUN mkdir /setup
