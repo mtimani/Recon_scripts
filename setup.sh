@@ -359,10 +359,10 @@ if [ ! -d ' /opt/ssh-audit' ]; then
 fi
 
 # Download SecLists
-if [ ! -d ' /opt/SecLists' ]; then
+if [ ! -d ' /opt/SecLists-DNS' ]; then
     cd /opt/
-    mkdir SecLists
-    cd SecLists
+    mkdir SecLists-DNS
+    cd SecLists-DNS
     wget -c https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Discovery/DNS/subdomains-top1million-110000.txt
     chown -R $(echo "$USER"):$(echo "$USER") /opt/SecLists
 fi
