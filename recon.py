@@ -119,7 +119,7 @@ def nmap_f(directory, domain):
     output_location = directory + "/01.Nmap/02.Nmap/" + domain + "/" + domain + " "
     if ping_failed:
         #bashCommand = "nmap -A -p- -Pn -oA " + output_location + domain
-        bashCommand = "nmap -A -p 22,80,443,445,1099,1433,3000,3306,3389,5000,5900,7001,7002,8000,8001,8008,8080,8083,8443,8834,8888,10000,28017,9000,623,8090,2301,45000,45001,623,873,1090,1098,1099,4444,11099,47001,47002,10999,6379,7000-7004,8002,8003,9001,9002,9003,9200,9503,7070,7071,1789,1889,11501,1500,5001,81,6338,7199,9010 -oA " + output_location + domain
+        bashCommand = "nmap -A -p 22,80,81,443,445,623,873,1080,1090,1098,1099,1433,1500,1789,1889,2301,3000,3306,3389,4444,5000,5001,5900,6338,6379,7000-7004,7199,8000,8001,8002,8003,8008,8080,8081,8082,8083,8090,8443,8834,8888,9000,9001,9002,9003,9010,9200,9503,10000,10080,10443,10999,11099,11501,28017,45000,45001,47001,47002 -oA " + output_location + domain
     else:
         bashCommand = "nmap -A -p- -oA " + output_location + domain
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -281,22 +281,13 @@ def ssl_f(directory, domain, port):
 
         ## Print to console
         cprint("SSL recon of " + domain + " on port " + port + "\n",'red')
-
-        ## SSLScan
-        bashCommand = "sslscan " + domain + ":" + port
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-
-        ### Write output of sslscan command to file
-        with open(working_dir + "/sslscan.txt","w") as fp:
-            fp.write(output.decode('ascii'))
         
         ## TestSSL
         bashCommand = testssl_location + " --connect-timeout 10 --openssl-timeout 10 " + domain + ":" + port
         process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
 
-        ### Write output of sslscan command to file
+        ### Write output of testssl command to file
         with open(working_dir + "/testssl.txt","w") as fp:
             fp.write(output.decode('ascii'))
 
@@ -508,8 +499,6 @@ def ssh_f(directory, domain, port):
 
     ### Run SSH-Audit script
     output_location = working_dir + "/SSH-Audit/ssh-audit-out.txt"
-    if output_location[0] != '/' or output_location[0] != '.':
-        output_location = "./" + output_location
     bashCommand = ssh_audit_location + " -p " + port + " " + domain
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -638,7 +627,7 @@ def http_f(directory, domain, port):
         
         ### Analyze
         cprint("\n\nThe following are the authorized methods by the https://" + domain + " website\n", 'red')
-        os.system(httpmethods_path + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
+        os.system(httpmethods_path + " -q -s -L -k -j " + workiucleig_dir + "/HTTP_Methods/http_methods.json https://" + domain)
 
     except:
         cprint("\tError running Http Methods tool for " + domain + " port " + port, 'red')
@@ -785,7 +774,7 @@ def https_f(directory, domain, port):
         ### Analyze
         ### Analyze
         cprint("\n\nThe following are the authorized methods by the https://" + domain + " website\n", 'red')
-        os.system(httpmethods_path + " -q -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
+        os.system(httpmethods_path + " -q -s -L -k -j " + working_dir + "/HTTP_Methods/http_methods.json https://" + domain)
 
     except:
         cprint("\tError running Http Methods tool for " + domain + " port " + port, 'red')
@@ -1025,6 +1014,15 @@ def recon(directory, hosts, params):
 
 #--------Arguments Parse Function-------#
 def parse_command_line():
+    ## Print header
+    print("""                                       
+RRRR    EEEEE   CCCC   OOO    N   N       PPPP    Y   Y
+R   R   E      C      O   O   NN  N       P   P    Y Y
+RRRR    EEEE   C      O   O   N N N       PPPP      Y
+R  R    E      C      O   O   N  NN       P         Y
+R   R   EEEEE   CCCC   OOO    N   N   O   P         Y
+    """)
+
     ## Arguments groups
     parser      = argparse.ArgumentParser()
     required    = parser.add_argument_group('required arguments')
@@ -1056,6 +1054,9 @@ def main(args):
         "do_nuclei": do_nuclei,
         "do_extended": do_extended
     }
+
+    ## Display welcome message
+    cprint("\nThe pizza is cooking, please wait...", "green")
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
