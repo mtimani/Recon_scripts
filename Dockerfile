@@ -25,4 +25,8 @@ RUN cd /setup && ./setup.sh
 
 RUN apt clean -y && apt autoclean -y
 
+RUN go clean --cache
+
+RUN pip cache purge
+
 WORKDIR /data
