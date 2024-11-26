@@ -27,7 +27,7 @@ from termcolor import colored, cprint
 
 
 #---------------Constants---------------#
-dns_bruteforce_wordlist_path    = "/opt/SecLists/Discovery/DNS/subdomains-top1million-110000.txt"
+dns_bruteforce_wordlist_path    = "/opt/SecLists-DNS/subdomains-top1million-110000.txt"
 SANextract_path                 = "/opt/SANextract/SANextract"
 webanalyze_path                 = "/usr/bin/webanalyze"
 gau_path                        = "/usr/bin/gau"
