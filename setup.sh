@@ -361,7 +361,9 @@ fi
 # Download SecLists
 if [ ! -d ' /opt/SecLists' ]; then
     cd /opt/
-    git clone https://github.com/danielmiessler/SecLists.git
+    mkdir SecLists
+    cd SecLists
+    wget -c https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Discovery/DNS/subdomains-top1million-110000.txt
     chown -R $(echo "$USER"):$(echo "$USER") /opt/SecLists
 fi
 
