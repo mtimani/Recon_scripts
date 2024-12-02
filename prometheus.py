@@ -210,15 +210,9 @@ def asset_discovery(params):
     
     ## Run command and display live output
     process = subprocess.Popen(to_run.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    while True:
-        output = process.stdout.readline()
-        
-        if output == '' and process.poll() is not None:
-            ## Exit if the process is done
-            break
-        if output != '\n':
-            ## Print the live output
-            print(output.strip())
+    for line in iter(process.stdout.readline, ""):
+        if line != '\n':
+            sys.stdout.write(line)
 
     ## Wait for the process to finish
     process.wait()
@@ -235,15 +229,9 @@ def blackbox_audit(params):
     
     ## Run command and display live output
     process = subprocess.Popen(to_run.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    while True:
-        output = process.stdout.readline()
-        
-        if output == '' and process.poll() is not None:
-            ## Exit if the process is done
-            break
-        if output != '\n':
-            ## Print the live output
-            print(output.strip())
+    for line in iter(process.stdout.readline, ""):
+        if line != '\n':
+            sys.stdout.write(line)
 
     ## Wait for the process to finish
     process.wait()
@@ -252,6 +240,17 @@ def blackbox_audit(params):
 
 #-------------Main Function-------------#
 def main():
+    ## Print tool logo
+    print("""
+ ____                           _   _                    
+|  _ \ _ __ ___  _ __ ___   ___| |_| |__   ___ _   _ ___ 
+| |_) | '__/ _ \| '_ ` _ \ / _ \ __| '_ \ / _ \ | | / __|
+|  __/| | | (_) | | | | | |  __/ |_| | | |  __/ |_| \__ \\
+|_|   |_|  \___/|_| |_| |_|\___|\__|_| |_|\___|\__,_|___/
+                                           Version: 1.0.0
+                                           Author: mtimani
+    """)
+
     ## Command line arguments
     s = ' '
     cmd_args_list = sys.argv[1:]
