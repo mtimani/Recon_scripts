@@ -1048,7 +1048,7 @@ def main(args):
 
     ## Display welcome message
     print()
-    cprint("⚙️ Configuration:", "blue")
+    cprint("⚙️  Configuration:", "blue")
     print("- Subscript: ", end='')
     cprint("Blackbox_Audit", "green")
 
