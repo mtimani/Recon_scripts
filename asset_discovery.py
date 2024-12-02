@@ -360,11 +360,12 @@ def whois(directory,ip_list,ip_dict):
 
         ### Complete dictionnary
         value_3  = "Organization:"
-        value_4  = "org-name"
+        value_4  = "org-name:"
         value_5  = "netname:"
+        value_6  = "org:"
         ip_owner = ""
         for line in whois_element.splitlines():
-            if (value_3 in line) or (value_4 in line) or (value_5 in line):
+            if (value_3 in line) or (value_4 in line) or (value_5 in line) or (value_6 in line):
                 ip_owner = line.split(":")[1].strip()
                 break
         
@@ -734,13 +735,12 @@ def gau_f(directory, domain_list_file = "/domain_list.txt"):
 #--------Arguments Parse Function-------#
 def parse_command_line():
     ## Print header
-    print("""                                       
- AAAAA   SSSSS  SSSSS  EEEEE  TTTTT       DDDD    III  SSSSS   CCCC   OOO   V   V  EEEEE  RRRR    Y   Y       PPPP    Y   Y
-A     A  S      S      E        T         D   D    I   S      C      O   O  V   V  E      R   R    Y Y        P   P    Y Y
-AAAAAAA  SSSSS  SSSSS  EEEEE    T         D   D    I   SSSSS  C      O   O  V   V  EEEEE  RRRR      Y         PPPP      Y
-A     A      S      S  E        T         D   D    I      S   C      O   O   V V   E      R  R      Y         P         Y
-A     A  SSSSS  SSSSS  EEEEE    T  ====== DDDD    III  SSSSS   CCCC   OOO     V    EEEEE  R   R     Y     O   P         Y
-    """)
+    cprint(" AAAAA   SSSSS  SSSSS  EEEEE  TTTTT       DDDD    III  SSSSS   CCCC   OOO   V   V  EEEEE  RRRR    Y   Y       PPPP    Y   Y"    , "green")
+    cprint("A     A  S      S      E        T         D   D    I   S      C      O   O  V   V  E      R   R    Y Y        P   P    Y Y"     , "green")
+    cprint("AAAAAAA  SSSSS  SSSSS  EEEEE    T         D   D    I   SSSSS  C      O   O  V   V  EEEEE  RRRR      Y         PPPP      Y"      , "green")
+    cprint("A     A      S      S  E        T         D   D    I      S   C      O   O   V V   E      R  R      Y         P         Y"      , "green")
+    cprint("A     A  SSSSS  SSSSS  EEEEE    T  ====== DDDD    III  SSSSS   CCCC   OOO     V    EEEEE  R   R     Y     O   P         Y"      , "green")
+    print()
 
     ## Arguments groups
     parser      = argparse.ArgumentParser()
