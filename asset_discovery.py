@@ -836,11 +836,11 @@ def main(args):
 
     if (provider_configuration_subfinder != None):
         if (not(os.path.exists(provider_configuration_subfinder))):
-            cprint("\nError! The specified subfinder configuration file: %s does not exist!\n" % (provider_configuration_subfinder), 'red')
+            cprint("\nError! The specified subfinder provider configuration file: %s does not exist!\n" % (provider_configuration_subfinder), 'red')
             exit_abnormal()
         subfinder_provider_configuration_file = provider_configuration_subfinder
         # Output to config output
-        print("- Subfinder configuration file: ", end='')
+        print("- Subfinder provider configuration file: ", end='')
         cprint("%s" % (subfinder_provider_configuration_file), "green")
 
     if (do_wafwoof):
