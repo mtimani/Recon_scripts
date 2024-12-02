@@ -29,7 +29,8 @@ mutually exclusive arguments:
 def usage_asset_discovery():
     print(
 '''
-usage: prometheus.py asset_discovery [-h] [-n] [-s] [-w] [-g] [-i] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...] | -b SUBDOMAIN_LIST_FILE)
+usage: prometheus.py asset_discovery [-h] [-n] [-s] [-w] [-g] [-i] [-pc PROVIDER_CONFIGURATION_SUBFINDER] -d DIRECTORY
+                          (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...] | -b SUBDOMAIN_LIST_FILE)
 
 options:
   -h, --help            show this help message and exit
@@ -38,6 +39,8 @@ options:
   -w, --webanalyzer     Use Webanalyzer to list used web technologies
   -g, --gau             Use gau tool to find interresting URLs on found web assets
   -i, --wafwoof         Use wafw00f to determine the WAF technology protecting the found web assets
+  -pc PROVIDER_CONFIGURATION_SUBFINDER, --provider_configuration_subfinder PROVIDER_CONFIGURATION_SUBFINDER
+                        Specify a subfinder configuration file to pass API keys for various providers
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
@@ -181,6 +184,34 @@ def filter_params(command, function):
             #### Check if subdomain list file exists
             if (not(os.path.exists(file_path))):
                 print("\nError! The specified subdomain list file: %s does not exist!\n" % (file_path))
+                exit_abnormal(function)
+
+            #### Replace old file name by location in docker
+            str_to_replace = file_path + " "
+            str_replacing  = "/data/" + file_name + " "
+            final_command = final_command.replace(str_to_replace, str_replacing, 1)
+
+            #### Add ./ if no slashes in path
+            if not('/' in file_path):
+                file_path = "./" + file_path
+
+            #### Add shared volume for subdomain list file
+            to_add = " -v " + file_path + ":/data/" + file_name
+            final_command = insert_after_target(final_command, "-t --rm", to_add)
+    
+    ## If the subdomain file parameter is specified
+    if ("-pc" in final_command) or ("--provider_configuration_subfinder" in final_command):
+        ### Variant of option specified (Extract values of -b or --bypass-domain-discovery parameters)
+        match = re.search(r'(-pc|--provider_configuration_subfinder)\s+(\S+)', final_command)
+        
+        ### If the value extraction was successful, modify the command
+        if match:
+            file_path = match.group(2)
+            file_name = file_path.split('/')[-1]
+
+            #### Check if subdomain list file exists
+            if (not(os.path.exists(file_path))):
+                print("\nError! The specified subfinder configuration file: %s does not exist!\n" % (file_path))
                 exit_abnormal(function)
 
             #### Replace old file name by location in docker
