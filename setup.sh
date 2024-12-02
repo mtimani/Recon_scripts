@@ -364,7 +364,7 @@ if [ ! -d ' /opt/SecLists-DNS' ]; then
     mkdir SecLists-DNS
     cd SecLists-DNS
     wget -c https://raw.githubusercontent.com/danielmiessler/SecLists/refs/heads/master/Discovery/DNS/subdomains-top1million-110000.txt
-    chown -R $(echo "$USER"):$(echo "$USER") /opt/SecLists
+    chown -R $(echo "$USER"):$(echo "$USER") /opt/SecLists-DNS
 fi
 
 # Download testssl
