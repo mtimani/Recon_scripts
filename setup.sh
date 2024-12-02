@@ -384,7 +384,7 @@ command -v "msfconsole" >/dev/null 2>&1
         rm -rf msfinstall
     fi
 
-# Replace global variables in recon.py
+# Replace global variables in blackbox_audit.py
 ## Variable init
 cd $initial_dir
 httpmethods_location=$(which httpmethods)
@@ -404,11 +404,11 @@ old_location="/opt/httpmethods/httpmethods.py"
 if [[ $httpmethods_location == *"aliased to"* ]]; then
     httpmethods_location=$(which httpmethods | awk '{print $5}')
 fi
-sed -i -e "s@$old_location@$httpmethods_location@" recon.py
+sed -i -e "s@$old_location@$httpmethods_location@" blackbox_audit.py
 old_location="/usr/bin/webanalyze"
-sed -i -e "s@$old_location@$webanalyze_location@" recon.py
+sed -i -e "s@$old_location@$webanalyze_location@" blackbox_audit.py
 old_location="/usr/bin/gau"
-sed -i -e "s@$old_location@$gau_location@" recon.py
+sed -i -e "s@$old_location@$gau_location@" blackbox_audit.py
 
 # Replace global variables in asset_discovery.py
 ## Variable init
@@ -465,9 +465,9 @@ fi
 
 # Move scripts to /usr/bin/
 cd $initial_dir
-mv recon.py /usr/bin/
-chmod +x /usr/bin/recon.py
-chown $(echo "$USER"):$(echo "$USER") /usr/bin/recon.py
+mv blackbox_audit.py /usr/bin/
+chmod +x /usr/bin/blackbox_audit.py
+chown $(echo "$USER"):$(echo "$USER") /usr/bin/blackbox_audit.py
 mv asset_discovery.py /usr/bin/
 chmod +x /usr/bin/asset_discovery.py
 chown $(echo "$USER"):$(echo "$USER") /usr/bin/asset_discovery.py
