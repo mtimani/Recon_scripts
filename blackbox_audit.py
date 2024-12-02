@@ -1014,14 +1014,6 @@ def recon(directory, hosts, params):
 
 #--------Arguments Parse Function-------#
 def parse_command_line():
-    ## Print header
-    cprint("BBBB   L       AAAAA    CCCC   K   K   BBBB     OOO    X   X            AAAAA    U    U   DDDD    I  TTTTT       PPPP    Y   Y" , "green")
-    cprint("B   B  L      A     A  C       K  K    B   B   O   O    X X            A     A   U    U   D   D   I    T         P   P    Y Y"  , "green")
-    cprint("BBBB   L      AAAAAAA  C       KKK     BBBB    O   O     X             AAAAAAA   U    U   D   D   I    T         PPPP      Y"   , "green")
-    cprint("B   B  L      A     A  C       K  K    B   B   O   O    X X            A     A   U    U   D   D   I    T         P         Y"   , "green")
-    cprint("BBBB   LLLLL  A     A   CCCC   K   K   BBBB     OOO    X   X   =====   A     A    UUUU    DDDD    I    T     O   P         Y"   , "green")
-    print()
-
     ## Arguments groups
     parser      = argparse.ArgumentParser()
     required    = parser.add_argument_group('required arguments')
@@ -1055,12 +1047,18 @@ def main(args):
     }
 
     ## Display welcome message
-    cprint("\nThe pizza is cooking, please wait...", "green")
+    print()
+    cprint("⚙️ Configuration:", "blue")
+    print("- Subscript: ", end='')
+    cprint("Blackbox_Audit", "green")
 
     ## Check if Output Directory exists
     if (not(os.path.exists(directory))):
         cprint("\nError! The specified output directory: %s does not exist!\n" % (directory), 'red')
         exit_abnormal()
+    # Output to config output
+    print("- Output Directory: ", end='')
+    cprint("%s" % (directory), "green")
 
     ## Hosts list creation
     ### Hosts list variable creation
@@ -1074,9 +1072,39 @@ def main(args):
         with open(host_list_file) as file:
             for line in file:
                 hosts.append(line.replace("\n", ""))
+        # Output to config output
+        print("- Host list file: ", end='')
+        cprint("%s" % (host_list_file), "green")
     ### If option -l is specified
     else:
         hosts = host_list
+        # Output to config output
+        print("- Host list: ", end='')
+        cprint("%s" % (host_list), "green")
+
+    if (params["do_extended"]):
+        # Output to config output
+        print("- Perform extended tests => ", end='')
+        cprint("YES", "green")
+    else:
+        print("- Perform extended tests => ", end='')
+        cprint("NO", "red")
+    
+    if (params["do_screenshots"]):
+        # Output to config output
+        print("- Capture Screenshots on specified hosts => ", end='')
+        cprint("YES", "green")
+    else:
+        print("- Capture Screenshots on specified hosts => ", end='')
+        cprint("NO", "red")
+
+    if (params["do_nuclei"]):
+        # Output to config output
+        print("- Perform nuclei scans on specified hosts => ", end='')
+        cprint("YES", "green")
+    else:
+        print("- Perform nuclei scans on specified hosts => ", end='')
+        cprint("NO", "red")
     
     ## Domains discovery function call
     recon(directory, hosts, params)
