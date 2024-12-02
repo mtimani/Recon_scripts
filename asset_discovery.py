@@ -47,7 +47,8 @@ WAFS                            = {"assets_number":0, "results":{}}
 def usage():
     print(
 '''
-usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] [-i] -d DIRECTORY (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...] | -b SUBDOMAIN_LIST_FILE)
+usage: asset_discovery.py [-h] [-n] [-s] [-w] [-g] [-i] [-pc PROVIDER_CONFIGURATION_SUBFINDER] -d DIRECTORY
+                          (-f HOST_LIST_FILE | -l HOST_LIST [HOST_LIST ...] | -b SUBDOMAIN_LIST_FILE)
 
 options:
   -h, --help            show this help message and exit
@@ -56,6 +57,8 @@ options:
   -w, --webanalyzer     Use Webanalyzer to list used web technologies
   -g, --gau             Use gau tool to find interresting URLs on found web assets
   -i, --wafwoof         Use wafw00f to determine the WAF technology protecting the found web assets
+  -pc PROVIDER_CONFIGURATION_SUBFINDER, --provider_configuration_subfinder PROVIDER_CONFIGURATION_SUBFINDER
+                        Specify a subfinder configuration file to pass API keys for various providers
 
 required arguments:
   -d DIRECTORY, --directory DIRECTORY
@@ -113,10 +116,10 @@ def dns_resolver(hostnames):
 
 
 #---------Multithreading Function---------#
-def worker_f(directory, root_domain, found_domains, subfinder_configuration_file):
+def worker_f(directory, root_domain, found_domains, subfinder_provider_configuration_file):
     ## Subfinder
-    if (subfinder_configuration_file != "None"):
-        bashCommand = "subfinder -silent -d " + root_domain + " -config " + subfinder_configuration_file
+    if (subfinder_provider_configuration_file != "None"):
+        bashCommand = "subfinder -silent -d " + root_domain + " -pc " + subfinder_provider_configuration_file
     else:
         bashCommand = "subfinder -silent -d " + root_domain
     
@@ -147,7 +150,7 @@ def worker_f(directory, root_domain, found_domains, subfinder_configuration_file
 
 
 #--------Domains Discovery Function-------#
-def first_domain_scan(directory, hosts, subfinder_configuration_file):
+def first_domain_scan(directory, hosts, subfinder_provider_configuration_file):
     ## Root and found domains list initialization
     root_domains  = hosts.copy()
     found_domains = hosts.copy()
@@ -160,7 +163,7 @@ def first_domain_scan(directory, hosts, subfinder_configuration_file):
     ## Loop over root domains
     with alive_progress.alive_bar(counter, ctrl_c=True, title=f'Subdomain search and bruteforce (Can take time)') as bar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-            future_f = {executor.submit(worker_f, directory, root_domain, found_domains, subfinder_configuration_file): root_domain for root_domain in root_domains}
+            future_f = {executor.submit(worker_f, directory, root_domain, found_domains, subfinder_provider_configuration_file): root_domain for root_domain in root_domains}
             
             for future in concurrent.futures.as_completed(future_f):
                 bar()
@@ -197,9 +200,9 @@ def httpx_f(directory, subdomain_list_file):
 
 
 #--------Domains Discovery Function-------#
-def domains_discovery(directory, hosts, subfinder_configuration_file):
+def domains_discovery(directory, hosts, subfinder_provider_configuration_file):
     ## First domain scan function call
-    found_domains = first_domain_scan(directory, hosts, subfinder_configuration_file)
+    found_domains = first_domain_scan(directory, hosts, subfinder_provider_configuration_file)
 
     ## Remove wildcard domains
     cprint("\n\n\nRunning wildcard DNS cleaning function\n", 'red')
@@ -750,7 +753,7 @@ def parse_command_line():
     parser.add_argument("-w", "--webanalyzer", dest='w', action='store_true', help="Use Webanalyzer to list used web technologies")
     parser.add_argument("-g", "--gau", dest='g', action='store_true', help="Use gau tool to find interresting URLs on found web assets")
     parser.add_argument("-i", "--wafwoof", dest='i', action='store_true', help="Use wafw00f to determine the WAF technology protecting the found web assets")
-    parser.add_argument("-c", "--configuration_subfinder", dest="subfinder_configuration", help="Specify a subfinder configuration file to pass API keys for various providers")
+    parser.add_argument("-pc", "--provider_configuration_subfinder", dest="provider_configuration_subfinder", help="Specify a subfinder configuration file to pass API keys for various providers")
     required.add_argument("-d", "--directory", dest="directory", help="Directory that will store results", required=True)
     content.add_argument("-f", "--filename", dest="host_list_file", help="Filename containing root domains to scan")
     content.add_argument("-l", "--list", dest="host_list", nargs='+', help="List of root domains to scan")
@@ -762,20 +765,20 @@ def parse_command_line():
 #-------------Main Function-------------#
 def main(args):
     ## Arguments
-    directory               = args.directory
-    host_list               = args.host_list
-    host_list_file          = args.host_list_file
-    subdomain_list_file     = args.subdomain_list_file
-    subfinder_configuration = args.subfinder_configuration
-    do_nuclei               = args.n
-    do_screenshots          = args.s
-    do_webanalyzer          = args.w
-    do_gau                  = args.g
-    do_wafwoof              = args.i
+    directory                           = args.directory
+    host_list                           = args.host_list
+    host_list_file                      = args.host_list_file
+    subdomain_list_file                 = args.subdomain_list_file
+    provider_configuration_subfinder    = args.provider_configuration_subfinder
+    do_nuclei                           = args.n
+    do_screenshots                      = args.s
+    do_webanalyzer                      = args.w
+    do_gau                              = args.g
+    do_wafwoof                          = args.i
 
     ## Display welcome message
     print()
-    cprint("⚙️ Configuration:", "blue")
+    cprint("⚙️  Configuration:", "blue")
     print("- Subscript: ", end='')
     cprint("Asset_Discovery", "green")
     
@@ -831,14 +834,14 @@ def main(args):
         print("- Perform subdomain enumeration => ", end='')
         cprint("NO", "red")
 
-    if (subfinder_configuration != None):
-        if (not(os.path.exists(subfinder_configuration))):
-            cprint("\nError! The specified subfinder configuration file: %s does not exist!\n" % (subfinder_configuration), 'red')
+    if (provider_configuration_subfinder != None):
+        if (not(os.path.exists(provider_configuration_subfinder))):
+            cprint("\nError! The specified subfinder configuration file: %s does not exist!\n" % (provider_configuration_subfinder), 'red')
             exit_abnormal()
-        subfinder_configuration_file = subfinder_configuration
+        subfinder_provider_configuration_file = provider_configuration_subfinder
         # Output to config output
         print("- Subfinder configuration file: ", end='')
-        cprint("%s" % (host_list_file), "green")
+        cprint("%s" % (subfinder_provider_configuration_file), "green")
 
     if (do_wafwoof):
         print("- Perform WAF enumeration => ", end='')
@@ -873,8 +876,8 @@ def main(args):
 
     ## Domains discovery function call in the case subdomains are not provided and only root domains are provided
     if (not subdomains):
-        if (subfinder_configuration != None):
-            found_domains = domains_discovery(directory, hosts, subfinder_configuration_file)
+        if (provider_configuration_subfinder != None):
+            found_domains = domains_discovery(directory, hosts, subfinder_provider_configuration_file)
         else:
             found_domains = domains_discovery(directory, hosts, "None")
 
