@@ -102,6 +102,19 @@ def insert_after_target(text, target, substring):
     else:
         # If target text is not found, return the original text
         return text
+
+
+
+#-----Replace last string occurence-----#
+def replace_last_occurrence(main_string, old_substring, new_substring):
+    # Find the last index of the old_substring
+    index = main_string.rfind(old_substring)
+    
+    # If the substring is found, replace it
+    if index != -1:
+        main_string = main_string[:index] + new_substring + main_string[index + len(old_substring):]
+    
+    return main_string
     
 
 
@@ -130,9 +143,14 @@ def filter_params(command, function):
                 exit_abnormal(function)
 
             #### Replace old directory name by location in docker
-            str_to_replace = old_dir_path + " "
-            str_replacing  = "/data/" + dir_name + " "
-            final_command = final_command.replace(str_to_replace, str_replacing, 1)
+            if (final_command.endswith(dir_path)):
+                str_to_replace = old_dir_path
+                str_replacing  = "/data/" + dir_name
+                final_command = replace_last_occurrence(final_command, str_to_replace, str_replacing)
+            else:
+                str_to_replace = old_dir_path + " "
+                str_replacing  = "/data/" + dir_name + " "
+                final_command = final_command.replace(str_to_replace, str_replacing, 1)
             
             #### Add ./ if no slashes in path
             if not('/' in dir_path):
@@ -159,9 +177,14 @@ def filter_params(command, function):
                 exit_abnormal(function)
 
             #### Replace old file name by location in docker
-            str_to_replace = file_path + " "
-            str_replacing  = "/data/" + file_name + " "
-            final_command = final_command.replace(str_to_replace, str_replacing, 1)
+            if (final_command.endswith(file_path)):
+                str_to_replace = file_path
+                str_replacing  = "/data/" + file_name
+                final_command = replace_last_occurrence(final_command, str_to_replace, str_replacing)
+            else:
+                str_to_replace = file_path + " "
+                str_replacing  = "/data/" + file_name + " "
+                final_command = final_command.replace(str_to_replace, str_replacing, 1)
 
             #### Add ./ if no slashes in path
             if not('/' in file_path):
@@ -187,9 +210,14 @@ def filter_params(command, function):
                 exit_abnormal(function)
 
             #### Replace old file name by location in docker
-            str_to_replace = file_path + " "
-            str_replacing  = "/data/" + file_name + " "
-            final_command = final_command.replace(str_to_replace, str_replacing, 1)
+            if (final_command.endswith(file_path)):
+                str_to_replace = file_path
+                str_replacing  = "/data/" + file_name
+                final_command = replace_last_occurrence(final_command, str_to_replace, str_replacing)
+            else:
+                str_to_replace = file_path + " "
+                str_replacing  = "/data/" + file_name + " "
+                final_command = final_command.replace(str_to_replace, str_replacing, 1)
 
             #### Add ./ if no slashes in path
             if not('/' in file_path):
@@ -215,9 +243,14 @@ def filter_params(command, function):
                 exit_abnormal(function)
 
             #### Replace old file name by location in docker
-            str_to_replace = file_path + " "
-            str_replacing  = "/data/" + file_name + " "
-            final_command = final_command.replace(str_to_replace, str_replacing, 1)
+            if (final_command.endswith(file_path)):
+                str_to_replace = file_path
+                str_replacing  = "/data/" + file_name
+                final_command = replace_last_occurrence(final_command, str_to_replace, str_replacing)
+            else:
+                str_to_replace = file_path + " "
+                str_replacing  = "/data/" + file_name + " "
+                final_command = final_command.replace(str_to_replace, str_replacing, 1)
 
             #### Add ./ if no slashes in path
             if not('/' in file_path):
